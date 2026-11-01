@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kiyamul-leyl-v27';
+const CACHE_NAME = 'kiyamul-leyl-v28';
 const APP_SHELL = [
   './',
   './index.html',
@@ -75,7 +75,7 @@ function staleWhileRevalidate(event) {
         .then((res) => res || (request.mode === 'navigate' ? cache.match('./index.html') : null))
         .then((res) => res || new Response(
           'Çevrimdışısınız ve bu sayfa önbellekte yok.',
-          { status: 503, statusText: 'Offline' }
+          { status: 503, statusText: 'Offline', headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
         ));
     })
   );
