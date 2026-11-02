@@ -276,7 +276,8 @@
             overflow: hidden;
         }
         .next-bar .next-info { color: var(--text-dark); font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
-        .next-bar .next-info #nextTime { font-size: 16px; }
+        .next-bar .next-info #nextTime, .next-bar .next-info #nextRaw { font-size: 16px; }
+        .next-bar .next-info #nextRaw { margin-left: 2px; color: #991b1b; }
         .next-bar .next-remain { color: var(--text-dark); font-weight: 700; font-variant-numeric: tabular-nums; flex-shrink: 0; }
         .next-bar .next-remain #nextRemain { font-size: 16px; }
         .source-note {
@@ -519,7 +520,7 @@
             </div>
 
             <div class="next-bar" id="nextBar">
-                <span class="next-info"><span id="nextName">—</span> <span id="nextTime">--:--</span></span>
+                <span class="next-info"><span id="nextName">—</span> <span id="nextTime">--:--</span><span id="nextRaw"></span></span>
                 <span class="next-remain">Kalan Süre: <span id="nextRemain" role="timer" aria-live="off">--:--:--</span></span>
             </div>
 
@@ -1236,7 +1237,7 @@ function clearDisplay() {
   document.querySelectorAll("#prayerGrid .p-time").forEach((el) => { el.textContent = "--:--"; });
   const setT = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
   setT("gregDate", "-"); setT("hijriDate", ""); setT("prayerDate", "-"); setT("prayerHijriDate", "");
-  setT("nextName", "—"); setT("nextTime", "--:--"); setT("nextRemain", "--:--:--");
+  setT("nextName", "—"); setT("nextTime", "--:--"); setT("nextRaw", ""); setT("nextRemain", "--:--:--");
   lastGridDateKey = null;
   cachedNextEvent = null;
   setDataMode(null);
@@ -1371,13 +1372,18 @@ function refreshVakitList(force) {
   highlightCurrentVakit(info);
 }
 
+const TEMKIN_MIN = { ogle: 5, ikindi: 4, aksam: 7 };
+
 function updateNextBar(next) {
   const nameEl = document.getElementById("nextName");
   const timeEl = document.getElementById("nextTime");
+  const rawEl = document.getElementById("nextRaw");
   const remainEl = document.getElementById("nextRemain");
-  if (!nameEl || !timeEl || !remainEl) return;
-  nameEl.textContent = (next.key === "sabah" ? "Sabah" : next.name) + " Vaktine";
+  if (!nameEl || !timeEl || !rawEl || !remainEl) return;
+  nameEl.textContent = (next.key === "sabah" ? "Sabah" : next.name) + " Vakti";
   timeEl.textContent = fmt(next.time);
+  const temkin = source === "aladhan" ? 0 : TEMKIN_MIN[next.key];
+  rawEl.textContent = temkin ? "/" + fmt(new Date(next.time.getTime() - temkin * 60000)) : "";
   remainEl.textContent = formatRemain(next.time.getTime() - Date.now());
   refreshVakitList();
 }
