@@ -307,8 +307,9 @@
             font-size: 16px;
             color: var(--accent-red);
             font-weight: 700;
-            margin-bottom: 16px;
+            margin-bottom: 9px;
         }
+        .sabah-camide-card.camide-imsak .time-row { visibility: hidden; }
         .sabah-camide-card .time-row {
             display: flex;
             align-items: center;
@@ -392,7 +393,7 @@
             justify-content: space-between;
             align-items: center;
             gap: 12px;
-            margin-top: 16px;
+            margin-top: 6.2px;
         }
         .imsak-gunes-mini {
             text-align: right;
@@ -432,10 +433,43 @@
             line-height: 1;
             text-shadow: 0 0 20px rgba(0,255,136,0.6), 0 0 40px rgba(0,255,136,0.3);
         }
-        .camide-note {
-            font-size: 9px;
+        .camide-opt {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            position: relative;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            background: none;
+            cursor: pointer;
+            font: inherit;
+            font-size: 10.5px;
             line-height: 1.4;
             color: var(--accent-blue-soft);
+            text-align: left;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .camide-opt::after { content: ""; position: absolute; inset: -3px -6px; }
+        .camide-chk {
+            position: relative;
+            flex-shrink: 0;
+            width: 13px;
+            height: 13px;
+            border-radius: 3px;
+            background: #ef4444;
+        }
+        .camide-opt[aria-pressed="true"] .camide-chk { background: #22c55e; }
+        .camide-opt[aria-pressed="true"] .camide-chk::after {
+            content: "";
+            position: absolute;
+            left: 4px;
+            top: 1.5px;
+            width: 3px;
+            height: 6px;
+            border: solid #000;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
         }
 
         .prayer-card {
@@ -586,7 +620,8 @@
                     <div class="camide-content">
                         <div class="camide-label">Camide Farz Namazı Vakti</div>
                         <div class="camide-time" id="camideTime">--:--</div>
-                        <div class="camide-note">(Güneşten 30 dk önce)</div>
+                        <button type="button" class="camide-opt" data-mode="gunes" aria-pressed="true"><span class="camide-chk"></span>(Güneşten 30 dk önce)</button>
+                        <button type="button" class="camide-opt" data-mode="imsak" aria-pressed="false"><span class="camide-chk"></span>(İmsaktan 30 dk sonra)</button>
                     </div>
                     <div class="imsak-gunes-mini">
                         <div class="mini-block">
@@ -640,6 +675,8 @@ if (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "Mac
 
 const STORAGE_KEY = "kiyamul-leyl.location.v1";
 const OFFSET_STORAGE_KEY = "kiyamul-leyl.sabahOffset.v1";
+const CAMIDE_MODE_KEY = "kiyamul-leyl.camideMode.v1";
+let camideMode = "gunes"; // "gunes": güneşten 30 dk önce · "imsak": imsaktan 30 dk sonra
 const CACHE_PREFIX = "kiyamul-leyl.cache.";
 
 function cacheGet(key) {
@@ -1137,7 +1174,7 @@ function calcDerived(period) {
   const sabahOnce = getSabahOffset();
   const sabahRaw = sabahOnce ? new Date(gunes.getTime() - sabahOnce * 60 * 1000) : imsak;
   const sabah    = sabahRaw < imsak ? imsak : sabahRaw;
-  const cami     = new Date(gunes.getTime() - 30 * 60 * 1000);
+  const cami     = camideMode === "imsak" ? new Date(imsak.getTime() + 30 * 60 * 1000) : new Date(gunes.getTime() - 30 * 60 * 1000);
   return { teheccud, seher, sabah, cami, imsak, aksam, gunes };
 }
 
@@ -1429,12 +1466,25 @@ function onOffsetChange() {
   }
 }
 
+function setCamideMode(mode, save) {
+  camideMode = mode === "imsak" ? "imsak" : "gunes";
+  document.querySelector(".sabah-camide-card").classList.toggle("camide-imsak", camideMode === "imsak");
+  document.querySelectorAll(".camide-opt").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === camideMode)));
+  if (save) {
+    try { localStorage.setItem(CAMIDE_MODE_KEY, camideMode); } catch (e) { console.warn("[storage] yazılamadı:", e); }
+    const period = state.times && findActivePeriod(state.times);
+    if (period) render(period);
+  }
+}
+
 function cleanupLegacyStorage() {
   try { localStorage.removeItem("kiyamul-leyl.location.v0"); } catch (e) { console.warn("[storage] silinemedi:", e); }
 }
 
 async function init() {
   cleanupLegacyStorage();
+  try { setCamideMode(localStorage.getItem(CAMIDE_MODE_KEY)); } catch (e) { console.warn("[storage] okunamadı:", e); }
+  document.querySelectorAll(".camide-opt").forEach((b) => b.addEventListener("click", () => setCamideMode(b.dataset.mode, true)));
   stateSelect.addEventListener("change", updateIlCityDisplay);
   stateSelect.addEventListener("change", onIlChange);
 
