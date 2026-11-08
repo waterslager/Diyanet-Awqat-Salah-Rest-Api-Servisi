@@ -1823,6 +1823,8 @@ window.addEventListener("pageshow", (e) => { if (e.persisted) resumeRefresh(); }
 init();
 
 if ("serviceWorker" in navigator) {
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController) location.reload(); });
   navigator.serviceWorker.register("sw.js", { updateViaCache: "none" })
     .catch((err) => console.warn("[SW] Kayıt başarısız:", err));
 }
