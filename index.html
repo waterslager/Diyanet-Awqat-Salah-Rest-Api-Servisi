@@ -507,6 +507,20 @@
         .prayer-item.is-current { background: rgba(100, 181, 246, 0.10); box-shadow: inset 0 0 0 1px rgba(100, 181, 246, 0.55); }
         .prayer-item .p-time { font-size: 12px; color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
 
+        .dk-box { display: flex; flex-direction: column; gap: 1mm; margin-bottom: 1mm; }
+        .dk-box [hidden] { display: none; }
+        .dk-card { border-radius: 9px; padding: 2px 8px 3px; background: var(--accent-green-bar); color: var(--text-dark); }
+        .dk-card.dk-k { position: relative; background: #f97316; }
+        .dk-card.red { background: var(--accent-red); }
+        #dkDuha.red { background: var(--accent-yellow); }
+        .dk-top { display: flex; align-items: center; gap: 6px; }
+        .dk-ttl { font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+        .dk-no { position: absolute; left: max(69%, 206px); top: 50%; transform: translate(-50%, -50%); font-size: 1rem; line-height: 1; }
+        .dk-rng { margin-left: auto; font-size: 1.1rem; font-weight: 700; line-height: 1.1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .dk-cd { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; background: #fff; color: var(--text-dark); font-weight: 700; border-radius: 5px; padding: 0 6px; margin-top: 1px; line-height: 1.15; }
+        .dk-cd span { font-size: 0.62rem; }
+        .dk-cd b { font-size: 0.9rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+
         .result-card, .sabah-camide-card { position: relative; }
         .card-icon {
             position: absolute; top: 13px; right: 13px; font-size: 22px;
@@ -636,6 +650,22 @@
                 </div>
             </div>
 
+            <div class="dk-box">
+                <div class="dk-card" id="dkDuha">
+                    <div class="dk-top"><span class="dk-ttl">Duha (Kuşluk) Namazı Vakti</span><span class="dk-rng">--:--</span></div>
+                    <div class="dk-cd" hidden><span>Duha vaktinin çıkmasına kalan süre</span><b></b></div>
+                </div>
+                <div class="dk-card dk-k" id="dkSabah">
+                    <div class="dk-top"><span class="dk-ttl">Sabah Kerahat Vakti Sonu</span><span class="dk-no" aria-hidden="true" hidden>⛔</span><span class="dk-rng">--:--</span></div>
+                </div>
+                <div class="dk-card dk-k" id="dkOgle">
+                    <div class="dk-top"><span class="dk-ttl">Öğle Kerahat Vakti Başlangıcı</span><span class="dk-no" aria-hidden="true" hidden>⛔</span><span class="dk-rng">--:--</span></div>
+                </div>
+                <div class="dk-card dk-k" id="dkIkindi">
+                    <div class="dk-top"><span class="dk-ttl">İkindi Kerahat Vakti Başlangıcı</span><span class="dk-no" aria-hidden="true" hidden>⛔</span><span class="dk-rng">--:--</span></div>
+                </div>
+            </div>
+
             <div class="card prayer-card">
                 <div class="card-icon">🕋</div>
                 <div class="card-title">📿 Namaz Vakitleri</div>
@@ -653,7 +683,7 @@
 
             <footer class="source-note">
                 Veri kaynağı: <span id="srcNote" style="color:var(--source-highlight);">Diyanet İşleri Başkanlığı</span> (<strong id="srcDomain" style="color:var(--accent-blue-soft);">awqatsalah.diyanet.gov.tr</strong>).<br>
-                <span id="srcFreq">Açılışta Worker'daki son kayıt gösterilir; aşağı çekince Diyanet'ten yenilenir.</span>
+                <span id="srcFreq">Açılışta Worker'daki son kayıt gösterilir; sayfa yenilenince Diyanet'ten yenilenir.</span>
                 <div id="srcLoc" class="hidden" style="margin-top:3px;font-size:0.62rem;opacity:.85;"></div>
             </footer>
 
@@ -777,7 +807,7 @@ const TURKEY_ID = "2";
 let source = "diyanet";
 const SOURCE_TIMEOUT_MS = 6000;
 const SOURCE_INFO = {
-  diyanet:     { note: "Diyanet İşleri Başkanlığı", domain: "awqatsalah.diyanet.gov.tr", freq: "Açılışta Worker'daki son kayıt gösterilir; aşağı çekince Diyanet'ten yenilenir." },
+  diyanet:     { note: "Diyanet İşleri Başkanlığı", domain: "awqatsalah.diyanet.gov.tr", freq: "Açılışta Worker'daki son kayıt gösterilir; sayfa yenilenince Diyanet'ten yenilenir." },
   diyanetlive: { note: "Diyanet İşleri Başkanlığı", domain: "awqatsalah.diyanet.gov.tr", freq: "Her açılışta ve yenilemede Diyanet'ten anlık alınır." },
   imsakiyem: { note: "Diyanet İşleri Başkanlığı", domain: "ezanvakti.imsakiyem.com", freq: "Her açılışta otomatik güncellenir." },
   emushaf:   { note: "Diyanet İşleri Başkanlığı", domain: "ezanvakti.emushaf.net", freq: "Her açılışta otomatik güncellenir." },
@@ -1276,6 +1306,7 @@ function clearDisplay() {
   setT("gregDate", "-"); setT("hijriDate", ""); setT("prayerDate", "-"); setT("prayerHijriDate", "");
   setT("nextName", "—"); setT("nextTime", "--:--"); setT("nextRaw", ""); setT("nextRemain", "--:--:--");
   lastGridDateKey = null;
+  refreshDuhaKerahat();
   cachedNextEvent = null;
   setDataMode(null);
   updateLocationLine();
@@ -1291,6 +1322,7 @@ function render(period) {
   document.getElementById("hijriDate").textContent = imsakDay.hijri ? "Hicrî: " + imsakDay.hijri : "";
 
   refreshVakitList(true);
+  refreshDuhaKerahat();
 
   const d = calcDerived(period);
   if (d) {
@@ -1409,6 +1441,47 @@ function refreshVakitList(force) {
   highlightCurrentVakit(info);
 }
 
+/* Duha ve kerahat kartları (s/e: vaktin başı/sonu, u: bu andan sonra yarın gösterilir (varsayılan akşam),
+   show: görünen saat(ler), k: kerahat → vakit sürerken kırmızı ve ⛔; Duha'da tersi: vakit dışında sarı, vakit içinde yeşil) */
+const DK_LIST = [
+  { id: "dkDuha",   s: "duha",    e: "duhaEnd",  u: "duhaEnd", show: ["duha", "duhaEnd"] },
+  { id: "dkSabah",  s: "gunes",   e: "sabahEnd", show: ["sabahEnd"], k: 1 },
+  { id: "dkOgle",   s: "ogleK",   e: "ogle",     show: ["ogleK"],    k: 1 },
+  { id: "dkIkindi", s: "ikindiK", e: "aksam",    show: ["ikindiK"],  k: 1 }
+];
+
+/* Duha başlangıcı = imsak + (akşam − imsak)/4; artık saniyeler dakikaya ileri yuvarlanır (8:19:15 → 8:20)
+   Sabah/ikindi kerahatı takvim saatinden 52 dk. (7 dk. temkin dahil; gerçek doğuş/batıştan en az 45 dk.), öğle kerahatı 30 dk. */
+function dkDay(d) {
+  const t = (k) => { const x = parseTime(d[k], d.date); return x && x.getTime(); };
+  const imsak = t("imsak"), gunes = t("gunes"), ogle = t("ogle"), aksam = t("aksam");
+  if (!imsak || !gunes || !ogle || !aksam) return null;
+  const ogleK = ogle - 30 * 60000;
+  return {
+    duha: ceilMin(new Date(imsak + (aksam - imsak) / 4)).getTime(), duhaEnd: ogleK,
+    gunes, sabahEnd: gunes + 52 * 60000, ogleK, ogle, ikindiK: aksam - 52 * 60000, aksam
+  };
+}
+
+function refreshDuhaKerahat() {
+  const today = getTodayData();
+  const next = today && state.times.find((x) => x.date.getTime() === today.date.getTime() + 864e5);
+  const T0 = today && dkDay(today), T1 = (next && dkDay(next)) || T0;
+  const now = Date.now();
+  for (const c of DK_LIST) {
+    const el = document.getElementById(c.id), rng = el.querySelector(".dk-rng"), cd = el.querySelector(".dk-cd");
+    const day = T0 && (now >= T0[c.u || "aksam"] ? T1 : T0);
+    const on = !!day && now >= day[c.s] && now < day[c.e];
+    el.classList.toggle("red", !!day && !!c.k === on);
+    if (c.k) el.querySelector(".dk-no").hidden = !on;
+    rng.textContent = day ? c.show.map((k) => fmt(new Date(day[k]))).join(" – ") : "--:--";
+    if (cd) {
+      cd.hidden = !on;
+      if (on) cd.querySelector("b").textContent = formatRemain(day[c.e] - now);
+    }
+  }
+}
+
 const TEMKIN_MIN = { ogle: 5, ikindi: 4, aksam: 7 };
 
 function updateNextBar(next) {
@@ -1423,6 +1496,7 @@ function updateNextBar(next) {
   rawEl.textContent = temkin ? "/" + fmt(new Date(next.time.getTime() - temkin * 60000)) : "";
   remainEl.textContent = formatRemain(next.time.getTime() - Date.now());
   refreshVakitList();
+  refreshDuhaKerahat();
 }
 
 function tickCountdown() {
