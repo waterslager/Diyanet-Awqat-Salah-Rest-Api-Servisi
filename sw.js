@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kiyamul-leyl-v33';
+const CACHE_NAME = 'kiyamul-leyl-v34';
 const APP_SHELL = [
   './',
   './index.html',
