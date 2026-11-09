@@ -1288,6 +1288,7 @@ async function loadAndRender(forceLive) {
     } else {
       setStatus("Vakitler alınamadı: " + msg, true);
     }
+    if (keepTimes && isTransient) scheduleReload();
     setLoading(false);
   }
 }

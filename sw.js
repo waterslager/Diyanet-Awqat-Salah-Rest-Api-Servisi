@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kiyamul-leyl-v34';
+const CACHE_NAME = 'kiyamul-leyl-v33';
 const APP_SHELL = [
   './',
   './index.html',
@@ -46,7 +46,7 @@ self.addEventListener('fetch', (event) => {
 // bağımsız ve gecikmesiz olarak sunulur — bir "zaman aşımı" kavramı ve
 // buna bağlı yanlış "çevrimdışı" hatası artık söz konusu değil.
 // Güncelleme arka planda sessizce indirilip önbelleğe yazılır; kullanıcı
-// bunu beklemez, güncel sürümü bir sonraki açılışta görür.
+// bunu beklemez. Yeni service worker devreye girince sayfa kendini yeniler.
 function staleWhileRevalidate(event) {
   const request = event.request;
   return caches.open(CACHE_NAME).then((cache) =>
