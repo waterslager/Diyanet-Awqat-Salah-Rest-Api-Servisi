@@ -758,6 +758,7 @@ function setLoading(on) {
     const el = document.getElementById(id);
     if (el) el.classList.toggle("skeleton", on);
   });
+  document.querySelectorAll(".dk-rng").forEach((el) => el.classList.toggle("skeleton", on));
   document.querySelectorAll("[data-key]").forEach((el) => el.classList.toggle("skeleton", on));
 }
 
@@ -805,7 +806,7 @@ const ALADHAN_BASE = "https://api.aladhan.com/v1";
 const TURKEY_ID = "2";
 
 let source = "diyanet";
-const SOURCE_TIMEOUT_MS = 6000;
+const IL_LIST_TIMEOUT_MS = 6000;
 const SOURCE_INFO = {
   diyanet:     { note: "Diyanet İşleri Başkanlığı", domain: "awqatsalah.diyanet.gov.tr", freq: "Açılışta Worker'daki son kayıt gösterilir; sayfa yenilenince Diyanet'ten yenilenir." },
   diyanetlive: { note: "Diyanet İşleri Başkanlığı", domain: "awqatsalah.diyanet.gov.tr", freq: "Her açılışta ve yenilemede Diyanet'ten anlık alınır." },
@@ -890,7 +891,7 @@ async function fetchJSON(url, { timeoutMs = 15000, signal, onHeaders } = {}) {
 async function getIller() {
   const cached = cacheGet("iller");
   if (cached) return cached;
-  const data = await fetchJSON(`${API_BASE}/locations/states?countryId=${TURKEY_ID}`, { timeoutMs: SOURCE_TIMEOUT_MS });
+  const data = await fetchJSON(`${API_BASE}/locations/states?countryId=${TURKEY_ID}`, { timeoutMs: IL_LIST_TIMEOUT_MS });
   if (!Array.isArray(data)) throw new Error("Sunucudan geçersiz yanıt geldi.");
   data.sort((a, b) => (a.name || "").localeCompare(b.name || "", "tr"));
   const normalized = data.map(s => ({ SehirID: s._id, SehirAdi: s.name }));
