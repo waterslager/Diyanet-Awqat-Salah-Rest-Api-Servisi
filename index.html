@@ -818,6 +818,7 @@ const SOURCE_INFO = {
   aladhan:   { note: "AlAdhan · Diyanet yöntemi", domain: "api.aladhan.com", freq: "Her açılışta otomatik güncellenir." }
 };
 
+// NOT: Bu liste worker.js içindeki IL_TR ile aynı olmalı; birini değiştirirseniz diğerini de güncelleyin.
 const IL_TR = ["ADANA","ADIYAMAN","AFYONKARAHİSAR","AĞRI","AKSARAY","AMASYA","ANKARA","ANTALYA","ARDAHAN","ARTVİN","AYDIN","BALIKESİR","BARTIN","BATMAN","BAYBURT","BİLECİK","BİNGÖL","BİTLİS","BOLU","BURDUR","BURSA","ÇANAKKALE","ÇANKIRI","ÇORUM","DENİZLİ","DİYARBAKIR","DÜZCE","EDİRNE","ELAZIĞ","ERZİNCAN","ERZURUM","ESKİŞEHİR","GAZİANTEP","GİRESUN","GÜMÜŞHANE","HAKKARİ","HATAY","IĞDIR","ISPARTA","İSTANBUL","İZMİR","KAHRAMANMARAŞ","KARABÜK","KARAMAN","KARS","KASTAMONU","KAYSERİ","KİLİS","KIRIKKALE","KIRKLARELİ","KIRŞEHİR","KOCAELİ","KONYA","KÜTAHYA","MALATYA","MANİSA","MARDİN","MERSİN","MUĞLA","MUŞ","NEVŞEHİR","NİĞDE","ORDU","OSMANİYE","RİZE","SAKARYA","SAMSUN","ŞANLIURFA","SİİRT","SİNOP","ŞIRNAK","SİVAS","TEKİRDAĞ","TOKAT","TRABZON","TUNCELİ","UŞAK","VAN","YALOVA","YOZGAT","ZONGULDAK"];
 function trToEn(s) {
   return String(s || "").replace(/[İIıi]/g, "I").replace(/[Şş]/g, "S").replace(/[Ğğ]/g, "G")
@@ -1261,6 +1262,10 @@ async function loadAndRender(forceLive) {
         setDataMode("live", pm && pm.at ? pm.at : Date.now());
       }
       updateLocationLine();
+    } else {
+      // Vakit verisi eksik geldi: yarım veriyle sayaçsız kalmasın, bir sonraki açılışta yeniden çekilsin
+      resetTimes();
+      highlightCurrentVakit(null);
     }
   } catch (e) {
     if (myRequestId !== state.requestId) return;
