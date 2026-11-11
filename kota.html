@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://diyanet-awqat-salah.ertantan-tr.workers.dev; frame-src about:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0f172a">
+<title>Diyanet Kota</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --line: #334155;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #fbbf24;
+    --err: #f87171;
+    --ok: #4ade80;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px));
+  }
+  main { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 14px; }
+  .card { background: var(--card); border-radius: 12px; padding: 14px; margin: 0 0 12px; }
+  .bar { display: flex; gap: 8px; align-items: stretch; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 0 0 6px; }
+  select, input[type="password"], input[type="text"] {
+    width: 100%; min-height: 44px; padding: 8px 10px;
+    background: var(--bg); color: var(--text);
+    border: 1px solid var(--line); border-radius: 10px; font: inherit;
+  }
+  select { flex: 1; min-width: 0; }
+  button {
+    min-height: 44px; padding: 8px 14px; border-radius: 10px; border: 0;
+    font: inherit; font-weight: 600; cursor: pointer;
+    background: var(--accent); color: #1f2937;
+  }
+  button.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); font-weight: 500; }
+  button:disabled { opacity: .55; cursor: default; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .chk { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 14px; color: var(--text); }
+  .chk input { width: 20px; height: 20px; }
+  #msg { border-radius: 12px; padding: 12px 14px; margin: 0 0 12px; font-size: 15px; }
+  #msg.err { background: rgba(248,113,113,.12); border: 1px solid var(--err); color: #fecaca; }
+  #msg.info { background: rgba(251,191,36,.10); border: 1px solid var(--accent); color: #fde68a; }
+  #report { display: block; width: 100%; height: 0; border: 0; background: transparent; margin: 0 -16px; width: calc(100% + 32px); }
+  .foot { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .foot a { color: var(--muted); }
+  #loading { color: var(--muted); font-size: 15px; padding: 8px 2px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Diyanet kota</h1>
+
+  <div class="card">
+    <label for="ilSel">İl</label>
+    <div class="bar">
+      <select id="ilSel" aria-label="İl seç"></select>
+      <button type="button" id="refreshBtn">Yenile</button>
+    </div>
+    <div class="row">
+      <button type="button" class="ghost" id="keyBtn">Şifre</button>
+    </div>
+  </div>
+
+  <form id="keyForm" class="card" autocomplete="off" hidden>
+    <label for="keyInput">Kota şifresi (KOTA_KEY)</label>
+    <input id="keyInput" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <label class="chk"><input type="checkbox" id="showKey"> Şifreyi göster</label>
+    <div class="row">
+      <button type="submit">Kaydet ve göster</button>
+      <button type="button" class="ghost" id="clearKeyBtn" hidden>Şifreyi sil</button>
+    </div>
+  </form>
+
+  <div id="msg" role="status" aria-live="polite" hidden></div>
+  <div id="loading" hidden>Yükleniyor…</div>
+
+  <iframe id="report" title="Diyanet kota raporu" sandbox="allow-same-origin" hidden></iframe>
+
+  <div class="foot">
+    <span id="stamp"></span>
+    <a href="./">← Uygulamaya dön</a>
+  </div>
+</main>
+
+<script>
+"use strict";
+/*
+ * Diyanet kota görüntüleyici — index.html'den bağımsız, tek dosya.
+ *
+ * Nasıl çalışır:
+ *  - Worker'ın kota sayfasını (?kota=1) çeker ve olduğu gibi, yalıtılmış (sandbox, script çalıştırmaz)
+ *    bir çerçevede gösterir; yani Worker'ın ürettiği kota kartları aynen görünür.
+ *  - Şifre (KOTA_KEY) yalnızca bu cihazın tarayıcısında saklanır, dosyanın içinde yoktur.
+ *  - Worker'da KOTA_KEY tanımlı değilse şifre sorulmaz, sayfa doğrudan açılır.
+ *  - İstek, Worker'daki ALLOWED_ORIGIN listesinde olan adresten (github.io) yapılmalıdır.
+ */
+
+const WORKER = "https://diyanet-awqat-salah.ertantan-tr.workers.dev";
+const KEY_STORE = "kota.key.v1";
+const IL_STORE = "kota.il.v1";
+const APP_IL_PREF = "kiyamul-leyl.ilpref.v1"; // ana uygulamanın son seçtiği il (varsa)
+const DEFAULT_STATE = "539"; // İstanbul
+const TIMEOUT_MS = 15000;
+const AUTO_REFRESH_MS = 30000;
+
+// NOT: Bu liste index.html ve worker.js içindeki IL_TR ile aynıdır; il kodu = 500 + sıra.
+const IL_TR = ["ADANA","ADIYAMAN","AFYONKARAHİSAR","AĞRI","AKSARAY","AMASYA","ANKARA","ANTALYA","ARDAHAN","ARTVİN","AYDIN","BALIKESİR","BARTIN","BATMAN","BAYBURT","BİLECİK","BİNGÖL","BİTLİS","BOLU","BURDUR","BURSA","ÇANAKKALE","ÇANKIRI","ÇORUM","DENİZLİ","DİYARBAKIR","DÜZCE","EDİRNE","ELAZIĞ","ERZİNCAN","ERZURUM","ESKİŞEHİR","GAZİANTEP","GİRESUN","GÜMÜŞHANE","HAKKARİ","HATAY","IĞDIR","ISPARTA","İSTANBUL","İZMİR","KAHRAMANMARAŞ","KARABÜK","KARAMAN","KARS","KASTAMONU","KAYSERİ","KİLİS","KIRIKKALE","KIRKLARELİ","KIRŞEHİR","KOCAELİ","KONYA","KÜTAHYA","MALATYA","MANİSA","MARDİN","MERSİN","MUĞLA","MUŞ","NEVŞEHİR","NİĞDE","ORDU","OSMANİYE","RİZE","SAKARYA","SAMSUN","ŞANLIURFA","SİİRT","SİNOP","ŞIRNAK","SİVAS","TEKİRDAĞ","TOKAT","TRABZON","TUNCELİ","UŞAK","VAN","YALOVA","YOZGAT","ZONGULDAK"];
+
+const $ = (id) => document.getElementById(id);
+const ilSel = $("ilSel"), refreshBtn = $("refreshBtn"), keyBtn = $("keyBtn");
+const keyForm = $("keyForm"), keyInput = $("keyInput"), showKey = $("showKey"), clearKeyBtn = $("clearKeyBtn");
+const msgBox = $("msg"), loadingBox = $("loading"), frame = $("report"), stampEl = $("stamp");
+
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) { /* yok say */ }
+  }
+};
+
+let memKey = ""; // depolama kullanılamazsa şifre yalnızca bu oturumda bellekte tutulur
+let reqId = 0;
+let activeCtl = null;
+let lastLoadAt = 0;
+
+const getKey = () => store.get(KEY_STORE) || memKey;
+const trUpper = (s) => String(s || "").trim().toLocaleUpperCase("tr");
+const titleCase = (s) => {
+  const low = String(s).toLocaleLowerCase("tr");
+  return low.charAt(0).toLocaleUpperCase("tr") + low.slice(1);
+};
+
+function fillIller() {
+  const frag = document.createDocumentFragment();
+  IL_TR.forEach((ad, i) => {
+    const o = document.createElement("option");
+    o.value = String(500 + i);
+    o.textContent = titleCase(ad);
+    frag.appendChild(o);
+  });
+  ilSel.appendChild(frag);
+}
+
+function pickInitialIl() {
+  const saved = store.get(IL_STORE);
+  if (saved && /^5\d\d$/.test(saved) && Number(saved) >= 500 && Number(saved) <= 580) return saved;
+  const pref = trUpper(store.get(APP_IL_PREF));
+  if (pref) {
+    const i = IL_TR.findIndex((ad) => trUpper(ad) === pref);
+    if (i >= 0) return String(500 + i);
+  }
+  return DEFAULT_STATE;
+}
+
+function showMsg(text, kind) {
+  msgBox.textContent = text;
+  msgBox.className = kind || "info";
+  msgBox.hidden = false;
+}
+function hideMsg() { msgBox.hidden = true; msgBox.textContent = ""; }
+
+function setBusy(on) {
+  refreshBtn.disabled = on;
+  loadingBox.hidden = !on;
+}
+
+function fitFrame() {
+  try {
+    const d = frame.contentDocument;
+    if (!d || !d.documentElement) return;
+    frame.style.height = "0px";
+    frame.style.height = d.documentElement.scrollHeight + "px";
+  } catch (e) {
+    frame.style.height = "70vh";
+  }
+}
+
+function showReport(html) {
+  keyForm.hidden = true;
+  frame.srcdoc = html;
+  frame.hidden = false;
+}
+
+function hideReport() {
+  frame.hidden = true;
+  frame.removeAttribute("srcdoc");
+  frame.style.height = "0px";
+}
+
+function openKeyForm(hint) {
+  hideReport();
+  keyForm.hidden = false;
+  clearKeyBtn.hidden = !getKey();
+  keyInput.value = "";
+  if (hint) showMsg(hint, "info");
+  keyInput.focus();
+}
+
+function stamp() {
+  lastLoadAt = Date.now();
+  const t = new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  stampEl.textContent = "Son güncelleme: " + t;
+}
+
+async function load() {
+  const myId = ++reqId;
+  if (activeCtl) activeCtl.abort();
+  const ctl = new AbortController();
+  activeCtl = ctl;
+  const timer = setTimeout(() => ctl.abort(), TIMEOUT_MS);
+  setBusy(true);
+  hideMsg();
+
+  const params = new URLSearchParams({ kota: "1", stateId: ilSel.value });
+  const key = getKey();
+  if (key) params.set("key", key);
+
+  try {
+    const res = await fetch(WORKER + "/?" + params.toString(), { cache: "no-store", signal: ctl.signal });
+    if (myId !== reqId) return;
+    const type = res.headers.get("Content-Type") || "";
+    if (res.ok && type.includes("text/html")) {
+      showReport(await res.text());
+      if (myId === reqId) stamp();
+      return;
+    }
+    let msg = "";
+    try { const j = await res.json(); msg = (j && j.message) || ""; } catch (e) { /* JSON değil */ }
+    if (myId !== reqId) return;
+    handleError(res.status, msg, !!key);
+  } catch (e) {
+    if (myId !== reqId) return;
+    hideReport();
+    if (e && e.name === "AbortError") showMsg("Bağlantı zaman aşımına uğradı. Birazdan Yenile’ye bas.", "err");
+    else showMsg("Worker’a ulaşılamadı. İnternet bağlantını kontrol et.", "err");
+  } finally {
+    clearTimeout(timer);
+    if (myId === reqId) setBusy(false);
+  }
+}
+
+function handleError(status, msg, hadKey) {
+  if (status === 403 && /anahtar/i.test(msg)) {
+    if (hadKey) { store.del(KEY_STORE); memKey = ""; }
+    openKeyForm(hadKey ? "Şifre yanlış. Tekrar dene." : "Bu sayfa için şifre gerekli.");
+    return;
+  }
+  hideReport();
+  if (status === 403) {
+    showMsg("Bu adres Worker’da izinli değil. Sayfayı waterslager.github.io üzerinden aç (ALLOWED_ORIGIN).", "err");
+    return;
+  }
+  showMsg(msg ? msg : "Sunucu hatası (" + status + ").", "err");
+}
+
+frame.addEventListener("load", () => {
+  fitFrame();
+  try { frame.contentDocument.addEventListener("toggle", fitFrame, true); } catch (e) { /* yok say */ }
+});
+window.addEventListener("resize", fitFrame);
+
+ilSel.addEventListener("change", () => { store.set(IL_STORE, ilSel.value); load(); });
+refreshBtn.addEventListener("click", load);
+keyBtn.addEventListener("click", () => {
+  if (keyForm.hidden) openKeyForm(""); else keyForm.hidden = true;
+});
+showKey.addEventListener("change", () => { keyInput.type = showKey.checked ? "text" : "password"; });
+clearKeyBtn.addEventListener("click", () => {
+  store.del(KEY_STORE); memKey = "";
+  clearKeyBtn.hidden = true;
+  showMsg("Şifre bu cihazdan silindi.", "info");
+});
+keyForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const v = keyInput.value.trim();
+  if (!v) { showMsg("Şifre boş olamaz.", "err"); return; }
+  if (!store.set(KEY_STORE, v)) memKey = v;
+  keyInput.value = "";
+  load();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && !frame.hidden && Date.now() - lastLoadAt > AUTO_REFRESH_MS) load();
+});
+
+fillIller();
+ilSel.value = pickInitialIl();
+load();
+</script>
+</body>
+</html>
