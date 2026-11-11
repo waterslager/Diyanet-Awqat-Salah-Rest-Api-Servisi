@@ -11,6 +11,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1c2a56">
 
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Kıyâmü'l-Leyl">
@@ -1844,10 +1845,10 @@ window.scrollTo(0, 0);
 
 (function () {
   function fitTitle() {
-    var h = document.querySelector('header h1');
+    const h = document.querySelector('header h1');
     if (!h) return;
     h.style.fontSize = '';
-    var fs = parseFloat(getComputedStyle(h).fontSize);
+    let fs = parseFloat(getComputedStyle(h).fontSize);
     while (h.scrollWidth > h.clientWidth && fs > 10) {
       fs -= 0.5;
       h.style.fontSize = fs + 'px';
