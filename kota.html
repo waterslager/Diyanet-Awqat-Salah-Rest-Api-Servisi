@@ -7,6 +7,7 @@
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0f172a">
+<meta name="color-scheme" content="dark">
 <title>Diyanet Kota</title>
 <style>
   :root {
@@ -62,7 +63,7 @@
 </style>
 </head>
 <body>
-<main>
+<main id="app" aria-busy="false">
   <header>
     <h1>Diyanet kota</h1>
   </header>
@@ -178,6 +179,7 @@ function showMsg(text, kind) {
 function hideMsg() { msgBox.hidden = true; msgBox.textContent = ""; }
 
 function setBusy(on) {
+  $("app").setAttribute("aria-busy", String(on));
   refreshBtn.disabled = on;
   loadingBox.hidden = !on;
 }
@@ -258,7 +260,13 @@ async function load() {
     let msg = "";
     try { const j = await res.json(); msg = (j && j.message) || ""; } catch (e) { /* JSON değil */ }
     if (myId !== reqId) return;
-    handleError(res.status, msg, !!key);
+    if (res.ok) {
+      // 200 döndü ama rapor (HTML) değil: bozuk ya da beklenmeyen yanıt
+      hideReport();
+      showMsg("Sunucudan beklenmeyen yanıt türü alındı. Biraz sonra yeniden dene.", "err");
+    } else {
+      handleError(res.status, msg, !!key);
+    }
   } catch (e) {
     if (myId !== reqId) return;
     hideReport();
@@ -310,7 +318,14 @@ window.addEventListener("resize", fitFrame);
 ilSel.addEventListener("change", () => { store.set(IL_STORE, ilSel.value); load(); });
 refreshBtn.addEventListener("click", load);
 keyBtn.addEventListener("click", () => {
-  if (keyForm.hidden) openKeyForm(""); else keyForm.hidden = true;
+  if (keyForm.hidden) {
+    clearKeyBtn.hidden = !getKey();
+    keyInput.value = "";
+    keyForm.hidden = false;
+    keyInput.focus();
+  } else {
+    keyForm.hidden = true;
+  }
 });
 showKey.addEventListener("change", () => { keyInput.type = showKey.checked ? "text" : "password"; });
 clearKeyBtn.addEventListener("click", () => {
