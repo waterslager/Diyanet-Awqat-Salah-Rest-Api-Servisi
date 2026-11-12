@@ -114,6 +114,7 @@ const WORKER = "https://diyanet-awqat-salah.ertantan-tr.workers.dev";
 const KEY_STORE = "kota.key.v1";
 const IL_STORE = "kota.il.v1";
 const APP_IL_PREF = "kiyamul-leyl.ilpref.v1"; // ana uygulamanın son seçtiği il (varsa)
+const PAGE_ORIGIN = "https://waterslager.github.io"; // Worker'ın izin verdiği adres (ALLOWED_ORIGIN)
 const DEFAULT_STATE = "539"; // İstanbul
 const TIMEOUT_MS = 15000;
 const AUTO_REFRESH_MS = 30000;
@@ -247,6 +248,7 @@ async function load() {
     if (myId !== reqId) return;
     hideReport();
     if (e && e.name === "AbortError") showMsg("Bağlantı zaman aşımına uğradı. Birazdan Yenile’ye bas.", "err");
+    else if (location.origin !== PAGE_ORIGIN) showMsg("Bu sayfa " + location.origin + " adresinden açılmış. Worker yalnızca " + PAGE_ORIGIN + " adresinden gelen isteklere cevap verir; sayfayı oradan aç.", "err");
     else showMsg("Worker’a ulaşılamadı. İnternet bağlantını kontrol et.", "err");
   } finally {
     clearTimeout(timer);
