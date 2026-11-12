@@ -63,7 +63,9 @@
 </head>
 <body>
 <main>
-  <h1>Diyanet kota</h1>
+  <header>
+    <h1>Diyanet kota</h1>
+  </header>
 
   <div class="card">
     <label for="ilSel">İl</label>
@@ -184,11 +186,24 @@ function fitFrame() {
   try {
     const d = frame.contentDocument;
     if (!d || !d.documentElement) return;
-    frame.style.height = "0px";
-    frame.style.height = d.documentElement.scrollHeight + "px";
+    const h = Math.ceil(d.documentElement.getBoundingClientRect().height);
+    if (h > 0) frame.style.height = h + "px";
   } catch (e) {
     frame.style.height = "70vh";
   }
+}
+
+let frameObserver = null;
+function watchFrame() {
+  // Çerçevenin içeriği büyüyüp küçüldüğünde (Ham yanıt açılıp kapanınca) yüksekliği otomatik ayarla.
+  if (frameObserver) { frameObserver.disconnect(); frameObserver = null; }
+  try {
+    const w = frame.contentWindow, d = frame.contentDocument;
+    if (w && w.ResizeObserver && d && d.documentElement) {
+      frameObserver = new w.ResizeObserver(fitFrame);
+      frameObserver.observe(d.documentElement);
+    }
+  } catch (e) { /* toggle olayı yedek olarak çalışır */ }
 }
 
 function showReport(html) {
@@ -232,7 +247,7 @@ async function load() {
   if (key) params.set("key", key);
 
   try {
-    const res = await fetch(WORKER + "/?" + params.toString(), { cache: "no-store", signal: ctl.signal });
+    const res = await fetch(WORKER + "/?" + params.toString(), { cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer", signal: ctl.signal });
     if (myId !== reqId) return;
     const type = res.headers.get("Content-Type") || "";
     if (res.ok && type.includes("text/html")) {
@@ -272,6 +287,7 @@ function handleError(status, msg, hadKey) {
 
 frame.addEventListener("load", () => {
   fitFrame();
+  watchFrame();
   try { frame.contentDocument.addEventListener("toggle", fitFrame, true); } catch (e) { /* yok say */ }
 });
 window.addEventListener("resize", fitFrame);
