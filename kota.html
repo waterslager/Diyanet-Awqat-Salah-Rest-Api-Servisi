@@ -285,10 +285,25 @@ function handleError(status, msg, hadKey) {
   showMsg(msg ? msg : "Sunucu hatası (" + status + ").", "err");
 }
 
+// "Ham yanıt" açılınca boyu ayarla ve açılan kartı ekranın tepesine getir (kapanınca kaydırma yok).
+function onReportToggle(e) {
+  fitFrame();
+  const el = e.target;
+  if (!el || el.tagName !== "DETAILS" || !el.open) return;
+  const card = el.closest(".c") || el;
+  requestAnimationFrame(() => {
+    try {
+      const top = frame.getBoundingClientRect().top + window.scrollY + card.getBoundingClientRect().top - 8;
+      const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.scrollTo({ top: Math.max(0, top), behavior: calm ? "auto" : "smooth" });
+    } catch (err) { /* kaydırma başarısızsa sorun değil */ }
+  });
+}
+
 frame.addEventListener("load", () => {
   fitFrame();
   watchFrame();
-  try { frame.contentDocument.addEventListener("toggle", fitFrame, true); } catch (e) { /* yok say */ }
+  try { frame.contentDocument.addEventListener("toggle", onReportToggle, true); } catch (e) { /* yok say */ }
 });
 window.addEventListener("resize", fitFrame);
 
