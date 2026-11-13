@@ -55,9 +55,15 @@
   #msg { border-radius: 12px; padding: 12px 14px; margin: 0 0 12px; font-size: 15px; }
   #msg.err { background: rgba(248,113,113,.12); border: 1px solid var(--err); color: #fecaca; }
   #msg.info { background: rgba(251,191,36,.10); border: 1px solid var(--accent); color: #fde68a; }
-  #report { display: block; width: 100%; height: 0; border: 0; background: transparent; margin: 0 -16px; width: calc(100% + 32px); }
-  .foot { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-top: 4px; }
-  .foot a { color: var(--muted); }
+  #report { display: block; width: calc(100% + 32px); height: 0; border: 0; background: transparent; margin: 0 -16px; }
+  .foot { margin-top: 4px; text-align: center; font-size: 13px; color: var(--muted); }
+  .back {
+    display: block; margin-top: 10px; padding: 12px;
+    background: var(--card); color: var(--text);
+    border: 1px solid var(--line); border-radius: 10px;
+    font-weight: 600; text-decoration: none;
+  }
+  .back:active { background: var(--line); }
   #loading { color: var(--muted); font-size: 15px; padding: 8px 2px; }
   [hidden] { display: none !important; }
 </style>
@@ -96,7 +102,7 @@
 
   <div class="foot">
     <span id="stamp"></span>
-    <a id="backLink" href="./">← Uygulamaya dön</a>
+    <a id="backLink" class="back" href="./">← Uygulamaya dön</a>
   </div>
 </main>
 
@@ -133,8 +139,7 @@ const msgBox = $("msg"), loadingBox = $("loading"), frame = $("report"), stampEl
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } },
-  del(k) { try { localStorage.removeItem(k); } catch (e) { /* yok say */ }
-  }
+  del(k) { try { localStorage.removeItem(k); } catch (e) { /* yok say */ } }
 };
 
 let memKey = ""; // depolama kullanılamazsa şifre yalnızca bu oturumda bellekte tutulur
