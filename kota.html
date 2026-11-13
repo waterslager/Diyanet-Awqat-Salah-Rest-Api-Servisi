@@ -96,7 +96,7 @@
 
   <div class="foot">
     <span id="stamp"></span>
-    <a href="./">← Uygulamaya dön</a>
+    <a id="backLink" href="./">← Uygulamaya dön</a>
   </div>
 </main>
 
@@ -344,6 +344,21 @@ keyForm.addEventListener("submit", (e) => {
 
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && !frame.hidden && Date.now() - lastLoadAt > AUTO_REFRESH_MS) load();
+});
+
+// "Uygulamaya dön": ana uygulamadan geldiysen önceki sayfaya dön (ana ekran durumu korunur, geçmiş şişmez);
+// başka yerden açıldıysa (ör. Chrome kısayolu) normal bağlantı olarak ana sayfaya gider.
+$("backLink").addEventListener("click", (e) => {
+  try {
+    if (history.length > 1 && document.referrer) {
+      const ref = new URL(document.referrer);
+      const dir = (p) => p.replace(/[^/]*$/, "");
+      if (ref.origin === location.origin && dir(ref.pathname) === dir(location.pathname)) {
+        e.preventDefault();
+        history.back();
+      }
+    }
+  } catch (err) { /* normal bağlantı çalışır */ }
 });
 
 fillIller();

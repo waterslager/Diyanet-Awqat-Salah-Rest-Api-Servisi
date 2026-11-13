@@ -290,6 +290,17 @@
             padding: 8px;
         }
 
+        .kota-link {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 6px 14px;
+            border: 1px solid var(--card-border);
+            border-radius: 999px;
+            color: var(--accent-blue);
+            font-size: 0.68rem;
+            text-decoration: none;
+        }
+
         .sabah-camide-card {
             background: var(--card-bg-black);
             border-radius: 20px;
@@ -689,6 +700,7 @@
                 Veri kaynağı: <span id="srcNote" style="color:var(--source-highlight);">Diyanet İşleri Başkanlığı</span> (<strong id="srcDomain" style="color:var(--accent-blue-soft);">awqatsalah.diyanet.gov.tr</strong>).<br>
                 <span id="srcFreq">Açılışta Worker'daki son kayıt gösterilir; sayfa yenilenince Diyanet'ten yenilenir.</span>
                 <div id="srcLoc" class="hidden" style="margin-top:3px;font-size:0.62rem;opacity:.85;"></div>
+                <a id="kotaLink" class="kota-link hidden" href="kota.html">Diyanet kotası</a>
             </footer>
 
             <div id="dataBadge" class="data-badge hidden" role="status" aria-live="polite"></div>
@@ -1629,6 +1641,9 @@ function updateSourceUI() {
   if (dom) dom.textContent = info.domain;
   const fr = document.getElementById("srcFreq");
   if (fr) fr.textContent = info.freq || "Her açılışta otomatik güncellenir.";
+  // Kota bağlantısı yalnızca Diyanet kaynaklarında görünür (kota.html aynı klasörde, uygulama içinde açılır)
+  const kl = document.getElementById("kotaLink");
+  if (kl) kl.classList.toggle("hidden", !(source === "diyanet" || source === "diyanetlive"));
 }
 
 let sourceToken = 0;
