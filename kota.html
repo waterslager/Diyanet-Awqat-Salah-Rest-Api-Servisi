@@ -17,6 +17,7 @@
     --text: #e2e8f0;
     --muted: #94a3b8;
     --accent: #fbbf24;
+    --green: #22c55e;
     --err: #f87171;
     --ok: #4ade80;
     color-scheme: dark;
@@ -44,7 +45,7 @@
   button {
     min-height: 44px; padding: 8px 14px; border-radius: 10px; border: 0;
     font: inherit; font-weight: 600; cursor: pointer;
-    background: var(--accent); color: #1f2937;
+    background: var(--green); color: #000;
   }
   button.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); font-weight: 500; }
   button:disabled { opacity: .55; cursor: default; }
@@ -56,14 +57,15 @@
   #msg.err { background: rgba(248,113,113,.12); border: 1px solid var(--err); color: #fecaca; }
   #msg.info { background: rgba(251,191,36,.10); border: 1px solid var(--accent); color: #fde68a; }
   #report { display: block; width: calc(100% + 32px); height: 0; border: 0; background: transparent; margin: 0 -16px; }
-  .foot { margin-top: 4px; text-align: center; font-size: 13px; color: var(--muted); }
-  .back {
-    display: block; margin-top: 10px; padding: 12px;
-    background: var(--card); color: var(--text);
-    border: 1px solid var(--line); border-radius: 10px;
-    font-weight: 600; text-decoration: none;
+  .foot { display: flex; justify-content: center; gap: 8px; margin-top: 4px; }
+  .pill {
+    padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px;
+    background: var(--card); color: var(--text); text-decoration: none;
+    font-size: clamp(10px, 3.2vw, 12px); white-space: nowrap;
   }
-  .back:active { background: var(--line); }
+  .pill:empty { display: none; }
+  .back { position: relative; border-color: rgba(59, 130, 246, .3); background: transparent; color: #00bfff; }
+  .back::after { content: ""; position: absolute; inset: -8px; }
   #loading { color: var(--muted); font-size: 15px; padding: 8px 2px; }
   [hidden] { display: none !important; }
 </style>
@@ -101,8 +103,8 @@
   <iframe id="report" title="Diyanet kota raporu" sandbox="allow-same-origin" hidden></iframe>
 
   <div class="foot">
-    <span id="stamp"></span>
-    <a id="backLink" class="back" href="./">← Uygulamaya dön</a>
+    <span id="stamp" class="pill"></span>
+    <a id="backLink" class="pill back" href="./">← Uygulamaya Dön</a>
   </div>
 </main>
 
