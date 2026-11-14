@@ -1474,12 +1474,12 @@ const DK_LIST = [
 ];
 
 /* Duha başlangıcı = imsak + (akşam − imsak)/4; artık saniyeler dakikaya ileri yuvarlanır (8:19:15 → 8:20)
-   Sabah/ikindi kerahatı takvim saatinden 52 dk. (7 dk. temkin dahil; gerçek doğuş/batıştan en az 45 dk.), öğle kerahatı 30 dk. */
+   Sabah/ikindi kerahatı takvim saatinden 52 dk. (7 dk. temkin dahil; gerçek doğuş/batıştan en az 45 dk.), öğle kerahatı 20 dk. */
 function dkDay(d) {
   const t = (k) => { const x = parseTime(d[k], d.date); return x && x.getTime(); };
   const imsak = t("imsak"), gunes = t("gunes"), ogle = t("ogle"), aksam = t("aksam");
   if (!imsak || !gunes || !ogle || !aksam) return null;
-  const ogleK = ogle - 30 * 60000;
+  const ogleK = ogle - 20 * 60000;
   return {
     duha: ceilMin(new Date(imsak + (aksam - imsak) / 4)).getTime(), duhaEnd: ogleK,
     gunes, sabahEnd: gunes + 52 * 60000, ogleK, ogle, ikindiK: aksam - 52 * 60000, aksam
