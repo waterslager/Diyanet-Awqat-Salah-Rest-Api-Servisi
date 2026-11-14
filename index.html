@@ -82,6 +82,7 @@
             margin-bottom: 3px;
             line-height: 1.3;
             white-space: nowrap;
+            color: var(--accent-blue);
         }
         .tevhid {
             font-size: clamp(12px, 2vw, 18px);
@@ -217,12 +218,12 @@
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
         .data-badge {
-          display: flex; align-items: center; justify-content: center; gap: 8px;
-          margin: 0 0 12px; padding: 6px 12px; border-radius: 999px;
-          font-size: 0.78rem; color: var(--muted, #94a3b8);
+          display: flex; align-items: center; justify-content: center; gap: 6px;
+          margin: 0 0 12px; padding: 2px 12px; border-radius: 999px;
+          font-size: 0.66rem; color: var(--muted, #94a3b8);
           background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
         }
-        .data-badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; flex: none; }
+        .data-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #22c55e; flex: none; }
         .data-badge.cache::before { background: #f59e0b; }
         .status {
             padding: 16px;
@@ -286,13 +287,13 @@
             text-align: center;
             font-size: 0.68rem;
             color: var(--muted-blue);
-            margin-top: 12px;
-            padding: 8px;
+            margin-top: 0;
+            padding: 4px 8px 8px;
         }
 
         .kota-link {
-            display: inline-block;
-            margin-top: 8px;
+            display: table;
+            margin: 8px auto 0;
             padding: 6px 14px;
             border: 1px solid var(--card-border);
             border-radius: 999px;
