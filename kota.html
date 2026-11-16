@@ -57,7 +57,7 @@
   #msg.err { background: rgba(248,113,113,.12); border: 1px solid var(--err); color: #fecaca; }
   #msg.info { background: rgba(251,191,36,.10); border: 1px solid var(--accent); color: #fde68a; }
   #report { display: block; width: calc(100% + 32px); height: 0; border: 0; background: transparent; margin: 0 -16px; }
-  .foot { display: flex; justify-content: center; gap: 8px; margin-top: 4px; }
+  .foot { display: flex; justify-content: center; gap: 8px; margin-top: 8px; }
   .pill {
     padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px;
     background: var(--card); color: var(--text); text-decoration: none;
@@ -300,25 +300,43 @@ function handleError(status, msg, hadKey) {
   showMsg(msg ? msg : "Sunucu hatası (" + status + ").", "err");
 }
 
-// "Ham yanıt" açılınca boyu ayarla ve açılan kartı ekranın tepesine getir (kapanınca kaydırma yok).
+// "Ham yanıt" açılınca kartı ekranın tepesine getir, kapanınca sayfayı en başa al (başlık tam görünsün).
+// İçerik bir an sonra tam yerleşebildiği için kaydırma biraz gecikmeyle yapılır ve hedefe varılana kadar kontrol edilir.
+let scrollTimers = [];
+let userTouched = false;
+
+function scrollToY(top, smooth) {
+  try {
+    const calm = !smooth || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: Math.max(0, top), behavior: calm ? "auto" : "smooth" });
+  } catch (err) { /* kaydırma başarısızsa sorun değil */ }
+}
+
 function onReportToggle(e) {
   fitFrame();
   const el = e.target;
-  if (!el || el.tagName !== "DETAILS" || !el.open) return;
+  if (!el || el.tagName !== "DETAILS") return;
   const card = el.closest(".c") || el;
-  requestAnimationFrame(() => {
-    try {
-      const top = frame.getBoundingClientRect().top + window.scrollY + card.getBoundingClientRect().top - 8;
-      const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      window.scrollTo({ top: Math.max(0, top), behavior: calm ? "auto" : "smooth" });
-    } catch (err) { /* kaydırma başarısızsa sorun değil */ }
-  });
+  userTouched = false;
+  scrollTimers.forEach(clearTimeout);
+  scrollTimers = [150, 700, 1400].map((ms, i) => setTimeout(() => {
+    if (userTouched) return;
+    const want = el.open ? frame.getBoundingClientRect().top + window.scrollY + card.getBoundingClientRect().top - 8 : 0;
+    if (i === 0 || Math.abs(want - window.scrollY) > 2) scrollToY(want, i === 0);
+  }, ms));
 }
+
+const stopAutoScroll = () => { userTouched = true; };
+["touchstart", "wheel"].forEach((ev) => window.addEventListener(ev, stopAutoScroll, { passive: true }));
 
 frame.addEventListener("load", () => {
   fitFrame();
   watchFrame();
-  try { frame.contentDocument.addEventListener("toggle", onReportToggle, true); } catch (e) { /* yok say */ }
+  try {
+    const d = frame.contentDocument;
+    d.addEventListener("toggle", onReportToggle, true);
+    ["touchstart", "wheel"].forEach((ev) => d.addEventListener(ev, stopAutoScroll, { passive: true }));
+  } catch (e) { /* yok say */ }
 });
 window.addEventListener("resize", fitFrame);
 
