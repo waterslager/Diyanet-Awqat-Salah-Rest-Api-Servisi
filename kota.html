@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://diyanet-awqat-salah.ertantan-tr.workers.dev; frame-src about:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://diyanet-awqat-salah.ertantan-tr.workers.dev; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0f172a">
@@ -56,7 +56,23 @@
   #msg { border-radius: 12px; padding: 12px 14px; margin: 0 0 12px; font-size: 15px; }
   #msg.err { background: rgba(248,113,113,.12); border: 1px solid var(--err); color: #fecaca; }
   #msg.info { background: rgba(251,191,36,.10); border: 1px solid var(--accent); color: #fde68a; }
-  #report { display: block; width: calc(100% + 32px); height: 0; border: 0; background: transparent; margin: 0 -16px; }
+  #report h2 { font-size: 18px; margin: 20px 0 10px; }
+  #cards .card { margin: 0 0 8px; scroll-margin-top: 8px; }
+  #cards .card:last-child { margin-bottom: 0; }
+  h3 { font-size: 15px; margin: 0 0 8px; color: var(--accent); }
+  .gap { margin-top: 8px; }
+  .hl { color: #00bfff; font-weight: 700; }
+  .note { color: var(--muted); font-size: 13px; }
+  .note.blue { color: #00bfff; }
+  .err { color: var(--err); }
+  summary {
+    display: inline-block; margin-top: 8px; padding: 6px 14px;
+    border: 1px solid rgba(59, 130, 246, .3); border-radius: 999px;
+    color: #00bfff; font-size: 14px; cursor: pointer; list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  details[open] .o, details:not([open]) .g { display: none; }
+  pre { margin: 6px 0 0; white-space: pre-wrap; word-break: break-word; font-size: 13px; }
   .foot { display: flex; justify-content: center; gap: 8px; margin-top: 8px; }
   .pill {
     padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px;
@@ -100,7 +116,10 @@
   <div id="msg" role="status" aria-live="polite" hidden></div>
   <div id="loading" hidden>Yükleniyor…</div>
 
-  <iframe id="report" title="Diyanet kota raporu" sandbox="allow-same-origin" hidden></iframe>
+  <section id="report" hidden>
+    <h2>Diyanet Kota Durumu</h2>
+    <div id="cards"></div>
+  </section>
 
   <div class="foot">
     <span id="stamp" class="pill"></span>
@@ -114,8 +133,8 @@
  * Diyanet kota görüntüleyici — index.html'den bağımsız, tek dosya.
  *
  * Nasıl çalışır:
- *  - Worker'ın kota sayfasını (?kota=1) çeker ve olduğu gibi, yalıtılmış (sandbox, script çalıştırmaz)
- *    bir çerçevede gösterir; yani Worker'ın ürettiği kota kartları aynen görünür.
+ *  - Worker'dan kota verisini JSON olarak çeker (?kota=1) ve kartları kendisi çizer; görünümün tamamı bu dosyadadır.
+ *  - Diyanet'in kendi kota yanıtı özetlenmeden, "Ham yanıt" altında eksiksiz gösterilir.
  *  - Şifre (KOTA_KEY) yalnızca bu cihazın tarayıcısında saklanır, dosyanın içinde yoktur.
  *  - Worker'da KOTA_KEY tanımlı değilse şifre sorulmaz, sayfa doğrudan açılır.
  *  - İstek, Worker'daki ALLOWED_ORIGIN listesinde olan adresten (github.io) yapılmalıdır.
@@ -136,7 +155,7 @@ const IL_TR = ["ADANA","ADIYAMAN","AFYONKARAHİSAR","AĞRI","AKSARAY","AMASYA","
 const $ = (id) => document.getElementById(id);
 const ilSel = $("ilSel"), refreshBtn = $("refreshBtn"), keyBtn = $("keyBtn");
 const keyForm = $("keyForm"), keyInput = $("keyInput"), showKey = $("showKey"), clearKeyBtn = $("clearKeyBtn");
-const msgBox = $("msg"), loadingBox = $("loading"), frame = $("report"), stampEl = $("stamp");
+const msgBox = $("msg"), loadingBox = $("loading"), report = $("report"), cards = $("cards"), stampEl = $("stamp");
 
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -191,40 +210,85 @@ function setBusy(on) {
   loadingBox.hidden = !on;
 }
 
-function fitFrame() {
-  try {
-    const d = frame.contentDocument;
-    if (!d || !d.documentElement) return;
-    const h = Math.ceil(d.documentElement.getBoundingClientRect().height);
-    if (h > 0) frame.style.height = h + "px";
-  } catch (e) {
-    frame.style.height = "70vh";
+// Küçük DOM yardımcısı: metinler textContent olarak eklenir, HTML olarak yorumlanmaz.
+function h(tag, cls, ...kids) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  e.append(...kids);
+  return e;
+}
+
+const fmtTime = (ms) => new Date(ms).toLocaleString("sv-SE", { timeZone: "Europe/Istanbul" }).slice(0, 16);
+const asNum = (x) => (x === null || x === undefined || x === "" || !Number.isFinite(Number(x)) ? null : Number(x));
+
+// "Ham yanıt" açılınca kartı ekranın tepesine getir, kapanınca sayfayı en başa al (başlık tam görünsün).
+function onRawToggle(e) {
+  const d = e.currentTarget;
+  const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+  if (d.open) d.closest(".card").scrollIntoView({ behavior, block: "start" });
+  else window.scrollTo({ top: 0, behavior });
+}
+
+function workerCard({ il, ilce, sayac }) {
+  const kim = il.ad + " (" + (ilce ? ilce.ad + " · " + ilce.id : "henüz vakit istenmedi") + ")";
+  const card = h("div", "card",
+    h("h3", "", "Worker Sayacı"),
+    h("div", "hl", kim + " · Kalan " + sayac.kalan + " / " + sayac.limit),
+    h("div", "", "Bugün Diyanet'e Gidilen: ", h("b", "", String(sayac.kullanilan))),
+    h("div", "note", "Sayaç gece yarısı (İstanbul saati) sıfırlanır. Aynı il için sayaç; hesabın tamamı değildir."),
+    h("div", "gap", "Tüm İller Toplamı: ", h("b", "", String(sayac.tumIller)), sayac.toplamLimit ? " / " + sayac.toplamLimit : ""));
+  if (!sayac.toplamLimit) card.append(h("div", "note", "(toplam sınır yok, her il kendi " + sayac.limit + " hakkını kullanır)"));
+  return card;
+}
+
+function diyanetCard(dq) {
+  const card = h("div", "card", h("h3", "", "Diyanet'in Kendi Kota Sorgusu"));
+  if (!dq.ok) {
+    card.append(
+      h("div", "", "Alınamadı: " + (dq.hata || "bilinmeyen hata")),
+      h("div", "note", "Diyanet bu uç noktayı sunmuyor ya da erişim izni yok olabilir. Yukarıdaki Worker sayacı geçerli."));
+    return card;
   }
-}
-
-let frameObserver = null;
-function watchFrame() {
-  // Çerçevenin içeriği büyüyüp küçüldüğünde (Ham yanıt açılıp kapanınca) yüksekliği otomatik ayarla.
-  if (frameObserver) { frameObserver.disconnect(); frameObserver = null; }
-  try {
-    const w = frame.contentWindow, d = frame.contentDocument;
-    if (w && w.ResizeObserver && d && d.documentElement) {
-      frameObserver = new w.ResizeObserver(fitFrame);
-      frameObserver.observe(d.documentElement);
+  const v = dq.veri || {};
+  if (Array.isArray(v.daily)) {
+    card.append(h("div", "", "Rol: ", h("b", "", v.role || "?"), " · günlük hak"));
+    for (const d of v.daily) {
+      const ad = d.resultName || d.controllerName || "?";
+      const hak = Number(d.benefit) || 0;
+      for (const l of Array.isArray(d.lines) && d.lines.length ? d.lines : [null]) {
+        const used = Number(l ? l.used : d.totalUsed) || 0;
+        const left = l && asNum(l.remainingUse) !== null ? asNum(l.remainingUse) : Math.max(0, hak - used);
+        card.append(h("div", "", ad + (l ? " " : ""), l ? h("span", "note blue", "(" + (l.parameter || "") + ")") : "",
+          h("b", "hl", ": " + used), " kullanıldı, ", h("b", "hl", "Kalan " + left + " / " + hak)));
+      }
+      if (Number(d.totalExceeded) > 0) card.append(h("div", "err", "Aşım sayısı: " + Number(d.totalExceeded)));
     }
-  } catch (e) { /* toggle olayı yedek olarak çalışır */ }
+    if (!v.daily.length) card.append(h("div", "", "Bugün kullanım yok"));
+  } else {
+    card.append(h("div", "", "Diyanet yanıt verdi:"));
+  }
+  const raw = h("details", "",
+    h("summary", "", h("span", "o", "Ham yanıtı göster ▾"), h("span", "g", "Ham yanıtı gizle ▴")),
+    h("pre", "", JSON.stringify(v, null, 2)));
+  raw.addEventListener("toggle", onRawToggle);
+  card.append(raw);
+  return card;
 }
 
-function showReport(html) {
+function errorCard(le) {
+  return h("div", "card", h("h3", "", "Son Hata"),
+    h("div", "", ...(le ? [le.mesaj, " ", h("span", "note", "(" + fmtTime(le.zaman) + ")")] : ["Yok"])));
+}
+
+function showReport(d) {
+  cards.replaceChildren(workerCard(d), diyanetCard(d.diyanet), errorCard(d.sonHata));
   keyForm.hidden = true;
-  frame.srcdoc = html;
-  frame.hidden = false;
+  report.hidden = false;
 }
 
 function hideReport() {
-  frame.hidden = true;
-  frame.removeAttribute("srcdoc");
-  frame.style.height = "0px";
+  report.hidden = true;
+  cards.replaceChildren();
 }
 
 function openKeyForm(hint) {
@@ -258,21 +322,17 @@ async function load() {
   try {
     const res = await fetch(WORKER + "/?" + params.toString(), { cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer", signal: ctl.signal });
     if (myId !== reqId) return;
-    const type = res.headers.get("Content-Type") || "";
-    if (res.ok && type.includes("text/html")) {
-      showReport(await res.text());
-      if (myId === reqId) stamp();
-      return;
-    }
-    let msg = "";
-    try { const j = await res.json(); msg = (j && j.message) || ""; } catch (e) { /* JSON değil */ }
+    let data = null;
+    try { data = await res.json(); } catch (e) { /* JSON değil: eski Worker ya da bozuk yanıt */ }
     if (myId !== reqId) return;
-    if (res.ok) {
-      // 200 döndü ama rapor (HTML) değil: bozuk ya da beklenmeyen yanıt
+    if (res.ok && data && data.success && data.sayac) {
+      showReport(data);
+      stamp();
+    } else if (res.ok) {
       hideReport();
-      showMsg("Sunucudan beklenmeyen yanıt türü alındı. Biraz sonra yeniden dene.", "err");
+      showMsg("Worker’dan beklenmeyen yanıt geldi. Worker’ı güncelle (sürüm 20) ya da biraz sonra yeniden dene.", "err");
     } else {
-      handleError(res.status, msg, !!key);
+      handleError(res.status, (data && data.message) || "", !!key);
     }
   } catch (e) {
     if (myId !== reqId) return;
@@ -300,45 +360,6 @@ function handleError(status, msg, hadKey) {
   showMsg(msg ? msg : "Sunucu hatası (" + status + ").", "err");
 }
 
-// "Ham yanıt" açılınca kartı ekranın tepesine getir, kapanınca sayfayı en başa al (başlık tam görünsün).
-// İçerik bir an sonra tam yerleşebildiği için kaydırma biraz gecikmeyle yapılır ve hedefe varılana kadar kontrol edilir.
-let scrollTimers = [];
-let userTouched = false;
-
-function scrollToY(top, smooth) {
-  try {
-    const calm = !smooth || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    window.scrollTo({ top: Math.max(0, top), behavior: calm ? "auto" : "smooth" });
-  } catch (err) { /* kaydırma başarısızsa sorun değil */ }
-}
-
-function onReportToggle(e) {
-  fitFrame();
-  const el = e.target;
-  if (!el || el.tagName !== "DETAILS") return;
-  const card = el.closest(".c") || el;
-  userTouched = false;
-  scrollTimers.forEach(clearTimeout);
-  scrollTimers = [150, 700, 1400].map((ms, i) => setTimeout(() => {
-    if (userTouched) return;
-    const want = el.open ? frame.getBoundingClientRect().top + window.scrollY + card.getBoundingClientRect().top - 8 : 0;
-    if (i === 0 || Math.abs(want - window.scrollY) > 2) scrollToY(want, i === 0);
-  }, ms));
-}
-
-const stopAutoScroll = () => { userTouched = true; };
-["touchstart", "wheel"].forEach((ev) => window.addEventListener(ev, stopAutoScroll, { passive: true }));
-
-frame.addEventListener("load", () => {
-  fitFrame();
-  watchFrame();
-  try {
-    const d = frame.contentDocument;
-    d.addEventListener("toggle", onReportToggle, true);
-    ["touchstart", "wheel"].forEach((ev) => d.addEventListener(ev, stopAutoScroll, { passive: true }));
-  } catch (e) { /* yok say */ }
-});
-window.addEventListener("resize", fitFrame);
 
 ilSel.addEventListener("change", () => { store.set(IL_STORE, ilSel.value); load(); });
 refreshBtn.addEventListener("click", load);
@@ -368,7 +389,7 @@ keyForm.addEventListener("submit", (e) => {
 });
 
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible" && !frame.hidden && Date.now() - lastLoadAt > AUTO_REFRESH_MS) load();
+  if (document.visibilityState === "visible" && !report.hidden && Date.now() - lastLoadAt > AUTO_REFRESH_MS) load();
 });
 
 // "Uygulamaya dön": ana uygulamadan geldiysen önceki sayfaya dön (ana ekran durumu korunur, geçmiş şişmez);
