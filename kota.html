@@ -29,7 +29,7 @@
     background: var(--bg);
     color: var(--text);
     font: 16px/1.4 "Times New Roman", Times, serif;
-    padding: calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) calc(56px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px));
+    padding: calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) 0 calc(16px + env(safe-area-inset-left, 0px));
   }
   main { max-width: 640px; margin: 0 auto; }
   h1 { font-size: 20px; margin: 0 0 8px; }
@@ -61,7 +61,9 @@
   #cards .card:last-child { margin-bottom: 0; }
   h3 { font-size: 15px; margin: 0 0 8px; color: var(--accent); }
   .card.line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
-  .card.line h3 { margin: 0; }
+  #cards .card.line { padding: 6px 12px; gap: 0 10px; line-height: 1.25; }
+  .card.line h3 { margin: 0; font-size: 14px; }
+  .card.line > div { font-size: 14px; }
   .gap { margin-top: 8px; }
   .hl { color: #00bfff; font-weight: 700; }
   .note { color: var(--muted); font-size: 13px; }
@@ -75,7 +77,12 @@
   summary::-webkit-details-marker { display: none; }
   details[open] .o, details:not([open]) .g { display: none; }
   pre { margin: 6px 0 0; white-space: pre-wrap; word-break: break-word; font-size: 13px; line-height: 1.3; }
-  .foot { display: flex; justify-content: center; gap: 8px; margin-top: 8px; }
+  .foot {
+    display: flex; justify-content: center; gap: 8px; margin-top: 6px;
+    position: sticky; bottom: 0; z-index: 5;
+    background: var(--bg); box-shadow: 0 -8px 8px -2px var(--bg);
+    padding: 8px 0 calc(10px + env(safe-area-inset-bottom, 0px));
+  }
   .pill {
     padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px;
     background: var(--card); color: var(--text); text-decoration: none;
@@ -319,10 +326,10 @@ async function load() {
 
   const params = new URLSearchParams({ kota: "1", stateId: ilSel.value });
   const key = getKey();
-  if (key) params.set("key", key);
+  const headers = key ? { Authorization: "Bearer " + key } : {};
 
   try {
-    const res = await fetch(WORKER + "/?" + params.toString(), { cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer", signal: ctl.signal });
+    const res = await fetch(WORKER + "/?" + params.toString(), { headers, cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer", signal: ctl.signal });
     if (myId !== reqId) return;
     let data = null;
     try { data = await res.json(); } catch (e) { /* JSON değil: eski Worker ya da bozuk yanıt */ }
