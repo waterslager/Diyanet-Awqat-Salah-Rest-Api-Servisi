@@ -906,13 +906,10 @@ async function fetchJSON(url, { timeoutMs = 15000, signal, onHeaders } = {}) {
 }
 
 async function getIller() {
-  const cached = cacheGet("iller");
-  if (cached) return cached;
   const data = await fetchJSON(`${API_BASE}/locations/states?countryId=${TURKEY_ID}`, { timeoutMs: IL_LIST_TIMEOUT_MS });
   if (!Array.isArray(data)) throw new Error("Sunucudan geçersiz yanıt geldi.");
   data.sort((a, b) => (a.name || "").localeCompare(b.name || "", "tr"));
   const normalized = data.map(s => ({ SehirID: s._id, SehirAdi: s.name }));
-  cacheSet("iller", normalized);
   return normalized;
 }
 

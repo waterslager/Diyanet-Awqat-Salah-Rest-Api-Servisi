@@ -1,34 +1,14 @@
-const CACHE_NAME = 'kiyamul-leyl-v37';
-const APP_SHELL = [
-  './',
-  './index.html',
-  './manifest.json',
-  './192.png',
-  './512.png',
-  './maskable-192.png',
-  './maskable-512.png'
-];
+// Önbelleksiz service worker: hiçbir şey saklanmaz, her istek doğrudan ağdan gider.
+// Eski sürümlerin bıraktığı tüm önbellekler aktivasyonda silinir.
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) =>
-      Promise.all(
-        APP_SHELL.map((url) =>
-          fetch(url, { cache: 'reload' })
-            .then((res) => {
-              if (res && res.ok) return cache.put(url, res.clone()).catch(() => {});
-            })
-            .catch(() => {}) // tek bir asset başarısız olursa kurulumun tamamını bloklamasın
-        )
-      )
-    ).then(() => self.skipWaiting())
-  );
+self.addEventListener('install', () => {
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => (k.startsWith('kiyamul-leyl-') && k !== CACHE_NAME) || k.startsWith('teheccud-')).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -39,66 +19,13 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
 
-  const isPage = event.request.mode === 'navigate' || event.request.destination === 'document';
-  event.respondWith(isPage ? networkFirst(event) : staleWhileRevalidate(event));
-});
-
-// Sayfalar (HTML): önce ağdan, yani her açılışta güncel sürüm gelir. NAV_TIMEOUT_MS içinde cevap gelmezse ya da
-// çevrimdışıysa önbellekteki son sürüm gösterilir; yavaş indirme arkada bitip önbelleği tazeler.
-// no-cache: tarayıcının HTTP önbelleği (GitHub Pages ~10 dk) yerine sunucuya koşullu istek atar.
-const NAV_TIMEOUT_MS = 2500;
-
-function networkFirst(event) {
-  const request = event.request;
-  return caches.open(CACHE_NAME).then((cache) => {
-    const fresh = fetch(request.url, { cache: 'no-cache' })
-      .then((res) => {
-        if (res && res.ok) cache.put(request, res.clone()).catch(() => {});
-        return res;
-      })
-      .catch(() => null);
-    try { event.waitUntil(fresh); } catch (_) { /* zaten bitmiş olabilir */ }
-    const timeout = new Promise((resolve) => setTimeout(() => resolve(null), NAV_TIMEOUT_MS));
-    return Promise.race([fresh, timeout])
-      .then((res) => (res && res.ok ? res : cache.match(request, { ignoreSearch: true }).then((c) => c || cache.match('./index.html'))))
-      .then((res) => res || new Response(
-        'Çevrimdışısınız ve bu sayfa önbellekte yok.',
+  // no-store: tarayıcının HTTP önbelleğini de atlar, her seferinde sunucudan alınır.
+  event.respondWith(
+    fetch(event.request.url, { cache: 'no-store' }).catch(() =>
+      new Response(
+        'Çevrimdışısınız. Bu uygulama internet bağlantısı gerektirir.',
         { status: 503, statusText: 'Offline', headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
-      ));
-  });
-}
-
-// Diğer dosyalar (ikonlar, manifest): önbellekten anında, güncelleme arkadan sessizce indirilip önbelleğe yazılır.
-function staleWhileRevalidate(event) {
-  const request = event.request;
-  return caches.open(CACHE_NAME).then((cache) =>
-    cache.match(request, { ignoreSearch: true }).then((cached) => {
-      // no-cache: tarayıcının HTTP önbelleği (GitHub Pages ~10 dk) yerine sunucuya
-      // koşullu istek atar; güncelleme 10 dk gecikmeden gelir.
-      const networkUpdate = fetch(request.url, { cache: 'no-cache' })
-        .then((res) => {
-          if (res && res.ok) cache.put(request, res.clone()).catch(() => {});
-          return res;
-        })
-        .catch(() => null);
-
-      if (cached) {
-        // Güncelleme bitene kadar service worker'ın kapanmaması için waitUntil.
-        // respondWith promise'i hâlâ beklemede olduğundan çağrı geçerlidir; yine de
-        // bazı tarayıcılarda InvalidStateError ihtimaline karşı try/catch'e alındı.
-        // networkUpdate zaten .catch(() => null) ile bittiğinden unhandled rejection yok.
-        try { event.waitUntil(networkUpdate); } catch (_) { networkUpdate.catch(() => {}); }
-        return cached;
-      }
-
-      // İlk ziyaret / önbellek boş: ağı bekle. Başarısız olursa sadece sayfa
-      // açılışlarında index.html'e düş (resim gibi dosyalara HTML dönmesin).
-      return networkUpdate
-        .then((res) => res || (request.mode === 'navigate' ? cache.match('./index.html') : null))
-        .then((res) => res || new Response(
-          'Çevrimdışısınız ve bu sayfa önbellekte yok.',
-          { status: 503, statusText: 'Offline', headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
-        ));
-    })
+      )
+    )
   );
-}
+});
