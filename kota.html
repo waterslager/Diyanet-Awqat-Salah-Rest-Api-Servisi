@@ -32,6 +32,7 @@
     padding: calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) 0 calc(16px + env(safe-area-inset-left, 0px));
   }
   main { max-width: 640px; margin: 0 auto; }
+  body.rawopen main { padding-bottom: 48px; }
   h1 { font-size: 20px; margin: 0 0 8px; }
   .card { background: var(--card); border-radius: 12px; padding: 14px; margin: 0 0 12px; }
   .bar { display: flex; gap: 8px; align-items: stretch; }
@@ -57,7 +58,7 @@
   #msg.err { background: rgba(248,113,113,.12); border: 1px solid var(--err); color: #fecaca; }
   #msg.info { background: rgba(251,191,36,.10); border: 1px solid var(--accent); color: #fde68a; }
   #report h2 { font-size: 18px; margin: 16px 0 6px; }
-  #cards .card { margin: 0 0 8px; scroll-margin-top: 8px; }
+  #cards .card { margin: 0 0 8px; scroll-margin-top: 0; }
   #cards .card:last-child { margin-bottom: 0; }
   h3 { font-size: 15px; margin: 0 0 8px; color: var(--accent); }
   .card.line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
@@ -237,6 +238,7 @@ const asNum = (x) => (x === null || x === undefined || x === "" || !Number.isFin
 // "Ham yanıt" açılınca kartı ekranın tepesine getir, kapanınca sayfayı en başa al (başlık tam görünsün).
 function onRawToggle(e) {
   const d = e.currentTarget;
+  document.body.classList.toggle("rawopen", d.open);
   const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
   if (d.open) d.closest(".card").scrollIntoView({ behavior, block: "start" });
   else window.scrollTo({ top: 0, behavior });
