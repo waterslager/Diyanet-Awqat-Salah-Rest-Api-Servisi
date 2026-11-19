@@ -32,7 +32,7 @@
     padding: calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) 0 calc(16px + env(safe-area-inset-left, 0px));
   }
   main { max-width: 640px; margin: 0 auto; }
-  body.rawopen main { padding-bottom: 48px; }
+  body.rawopen main { padding-bottom: 100vh; }
   h1 { font-size: 20px; margin: 0 0 8px; }
   .card { background: var(--card); border-radius: 12px; padding: 14px; margin: 0 0 12px; }
   .bar { display: flex; gap: 8px; align-items: stretch; }
@@ -235,10 +235,13 @@ function h(tag, cls, ...kids) {
 const fmtTime = (ms) => new Date(ms).toLocaleString("sv-SE", { timeZone: "Europe/Istanbul" }).slice(0, 16);
 const asNum = (x) => (x === null || x === undefined || x === "" || !Number.isFinite(Number(x)) ? null : Number(x));
 
-// "Ham yanıt" açılıp kapanır; otomatik kaydırma yok.
+// "Ham yanıt" açılınca kartı ekranın tepesine getir, kapanınca sayfayı en başa al (başlık tam görünsün).
 function onRawToggle(e) {
   const d = e.currentTarget;
   document.body.classList.toggle("rawopen", d.open);
+  const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+  if (d.open) d.closest(".card").scrollIntoView({ behavior, block: "start" });
+  else window.scrollTo({ top: 0, behavior });
 }
 
 function workerCard({ il, ilce, sayac }) {
