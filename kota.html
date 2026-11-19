@@ -235,13 +235,10 @@ function h(tag, cls, ...kids) {
 const fmtTime = (ms) => new Date(ms).toLocaleString("sv-SE", { timeZone: "Europe/Istanbul" }).slice(0, 16);
 const asNum = (x) => (x === null || x === undefined || x === "" || !Number.isFinite(Number(x)) ? null : Number(x));
 
-// "Ham yanıt" açılınca kartı ekranın tepesine getir, kapanınca sayfayı en başa al (başlık tam görünsün).
+// "Ham yanıt" açılıp kapanır; otomatik kaydırma yok.
 function onRawToggle(e) {
   const d = e.currentTarget;
   document.body.classList.toggle("rawopen", d.open);
-  const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
-  if (d.open) d.closest(".card").scrollIntoView({ behavior, block: "start" });
-  else window.scrollTo({ top: 0, behavior });
 }
 
 function workerCard({ il, ilce, sayac }) {
