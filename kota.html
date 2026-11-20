@@ -70,6 +70,8 @@
   .card.line h3 { margin: 0; font-size: 14px; }
   .card.line > div { font-size: 14px; }
   .gap { margin-top: 8px; }
+  .fit { white-space: nowrap; }
+  .fit .note { font-size: inherit; }
   .hl { color: #00bfff; font-weight: 700; }
   .note { color: var(--muted); font-size: 13px; }
   .note.blue { color: #00bfff; }
@@ -252,7 +254,7 @@ function workerCard({ il, ilce, sayac }) {
   const kim = il.ad + " (" + (ilce ? ilce.ad + " · " + ilce.id : "henüz vakit istenmedi") + ")";
   const card = h("div", "card",
     h("h3", "", "Worker Sayacı"),
-    h("div", "hl", kim + " · Kalan " + sayac.kalan + " / " + sayac.limit),
+    h("div", "hl fit", kim + " · Kalan " + sayac.kalan + " / " + sayac.limit),
     h("div", "", "Bugün Diyanet'e Gidilen: ", h("b", "", String(sayac.kullanilan))),
     h("div", "note", "Sayaç gece yarısı (İstanbul saati) sıfırlanır. Aynı il için sayaç; hesabın tamamı değildir."),
     h("div", "gap", "Tüm İller Toplamı: ", h("b", "", String(sayac.tumIller)), sayac.toplamLimit ? " / " + sayac.toplamLimit : ""));
@@ -277,8 +279,10 @@ function diyanetCard(dq) {
       for (const l of Array.isArray(d.lines) && d.lines.length ? d.lines : [null]) {
         const used = Number(l ? l.used : d.totalUsed) || 0;
         const left = l && asNum(l.remainingUse) !== null ? asNum(l.remainingUse) : Math.max(0, hak - used);
-        card.append(h("div", "", ad + (l ? " " : ""), l ? h("span", "note blue", "(" + (l.parameter || "") + ")") : "",
-          h("b", "hl", ": " + used), " kullanıldı, ", h("b", "hl", "Kalan " + left + " / " + hak)));
+        card.append(
+          h("div", "fit", ad + (l ? " " : ""), l ? h("span", "note blue", "(" + (l.parameter || "") + ")") : "",
+            ": ", h("b", "hl", "Kalan " + left + " / " + hak)),
+          h("div", "", "Diyanet’ten çekilen kota: ", h("b", "", String(used))));
       }
       if (Number(d.totalExceeded) > 0) card.append(h("div", "err", "Aşım sayısı: " + Number(d.totalExceeded)));
     }
@@ -299,10 +303,22 @@ function errorCard(le) {
     h("div", "", ...(le ? [le.mesaj, " ", h("span", "note", "(" + fmtTime(le.zaman) + ")")] : ["Yok"])));
 }
 
+// Tek satır kalması gereken metinler sığmazsa sığana kadar küçülür (en az 10px; yine sığmazsa alt satıra geçer).
+function fitLines() {
+  for (const el of document.querySelectorAll(".fit")) {
+    el.style.fontSize = el.style.whiteSpace = "";
+    let size = parseFloat(getComputedStyle(el).fontSize);
+    while (el.scrollWidth > el.clientWidth && size > 10) el.style.fontSize = (size -= 0.5) + "px";
+    if (el.scrollWidth > el.clientWidth) el.style.whiteSpace = "normal";
+  }
+}
+window.addEventListener("resize", fitLines);
+
 function showReport(d) {
   cards.replaceChildren(workerCard(d), diyanetCard(d.diyanet), ...(d.sonHata ? [errorCard(d.sonHata)] : []));
   keyForm.hidden = true;
   report.hidden = false;
+  fitLines(); // görünür olduktan sonra ölçülmeli
 }
 
 function hideReport() {
