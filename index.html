@@ -918,7 +918,7 @@ function getIstanbulParts() {
 
 function hm(v) {
   const m = typeof v === "string" ? v.match(/^(\d{1,2}):(\d{2})/) : null;
-  return m ? pad(Number(m[1])) + ":" + m[2] : "--:--";
+  return m && Number(m[1]) <= 23 && Number(m[2]) <= 59 ? pad(Number(m[1])) + ":" + m[2] : "--:--";
 }
 
 function isoDate(d) {
@@ -935,25 +935,32 @@ async function getVakitlerImsakiyem(ilceId, signal) {
   return mapDays(data);
 }
 
+// "gg.aa.yyyy" veya "yyyy-aa-gg…" → UTC tarihi; geçersizse (31.02, 2000 öncesi vb.) null
+function parseDay(raw) {
+  let y, m, d;
+  let r = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(raw);
+  if (r) { d = +r[1]; m = +r[2]; y = +r[3]; }
+  else if ((r = /^(\d{4})-(\d{2})-(\d{2})/.exec(raw))) { y = +r[1]; m = +r[2]; d = +r[3]; }
+  else return null;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const ok = y >= 2000 && y <= 2100 && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+  return ok ? dt : null;
+}
+
 function mapDays(data) {
   if (!Array.isArray(data)) throw new Error("Sunucudan geçersiz yanıt geldi.");
   const p = getIstanbulParts();
-  return data.map(d => {
+  const byDate = new Map(); // yinelenen günde sonraki kayıt öncekinin yerini alır
+  for (const d of data) {
+    if (!d || typeof d !== "object") continue;
     const t = (d.times && typeof d.times === "object") ? d.times : d;
     const pick = (a, b) => hm(t[a] ?? t[b] ?? d[a] ?? d[b] ?? "");
-    let dateObj;
     const raw = d.date || d.MiladiTarihKisaIso8601 || d.MiladiTarihUzunIso8601 || "";
-    if (/^\d{2}\.\d{2}\.\d{4}$/.test(raw)) {
-      const [dd, mm, yyyy] = raw.split(".").map(Number);
-      dateObj = new Date(Date.UTC(yyyy, mm - 1, dd));
-    } else if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
-      const [yyyy, mm, dd] = raw.substring(0, 10).split("-").map(Number);
-      dateObj = new Date(Date.UTC(yyyy, mm - 1, dd));
-    } else {
-      dateObj = new Date(Date.UTC(p.year, p.month - 1, p.day));
-    }
-    return {
-      date:   dateObj,
+    // Tarih alanı hiç yoksa bugün sayılır; var ama bozuksa kayıt atılır (yanlış güne yazılmasın)
+    const date = raw ? parseDay(raw) : new Date(Date.UTC(p.year, p.month - 1, p.day));
+    if (!date) continue;
+    const day = {
+      date,
       imsak:  pick("imsak",  "Imsak"),
       gunes:  pick("gunes",  "Gunes"),
       ogle:   pick("ogle",   "Ogle"),
@@ -962,7 +969,11 @@ function mapDays(data) {
       yatsi:  pick("yatsi",  "Yatsi"),
       hijri:  d.HicriTarihUzun || (d.hijri_date && d.hijri_date.full_date) || d.hijriDate || ""
     };
-  });
+    if (["imsak", "gunes", "ogle", "ikindi", "aksam", "yatsi"].every((k) => day[k] === "--:--")) continue;
+    byDate.set(date.getTime(), day);
+  }
+  if (!byDate.size) throw new Error("Sunucudan geçersiz yanıt geldi.");
+  return Array.from(byDate.values()).sort((a, b) => a.date - b.date);
 }
 
 async function getVakitlerEmushaf(ilceId, signal) {
