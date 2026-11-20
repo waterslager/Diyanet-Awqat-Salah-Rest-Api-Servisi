@@ -349,7 +349,7 @@ async function load() {
       stamp();
     } else if (res.ok) {
       hideReport();
-      showMsg("Worker’dan beklenmeyen yanıt geldi. Worker’ı güncelle (sürüm 20) ya da biraz sonra yeniden dene.", "err");
+      showMsg("Worker’dan beklenmeyen yanıt geldi. Worker’ı güncelle ya da biraz sonra yeniden dene.", "err");
     } else {
       handleError(res.status, (data && data.message) || "", !!key);
     }
@@ -378,7 +378,6 @@ function handleError(status, msg, hadKey) {
   }
   showMsg(msg ? msg : "Sunucu hatası (" + status + ").", "err");
 }
-
 
 ilSel.addEventListener("change", () => { store.set(IL_STORE, ilSel.value); load(); });
 refreshBtn.addEventListener("click", load);
