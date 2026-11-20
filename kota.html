@@ -258,15 +258,25 @@ function workerCard({ il, ilce, sayac }) {
   const card = h("div", "card",
     h("h3", "", "Worker Sayacı"),
     h("div", "hl fit", kim + " · Kalan " + sayac.kalan + " / " + sayac.limit),
-    h("div", "", "Bugün Diyanet'e Gidilen: ", h("b", "", String(sayac.kullanilan))),
-    h("div", "note", "Sayaç gece yarısı (İstanbul saati) sıfırlanır. Aynı il için sayaç; hesabın tamamı değildir."),
-    h("div", "gap", "Tüm İller Toplamı: ", h("b", "", String(sayac.tumIller)), sayac.toplamLimit ? " / " + sayac.toplamLimit : ""));
-  if (!sayac.toplamLimit) card.append(h("div", "note", "(toplam sınır yok, her il kendi " + sayac.limit + " hakkını kullanır)"));
+    h("div", "", "Bugün Diyanet’e Gidilen: ", h("b", "", String(sayac.kullanilan))),
+    h("div", "note", "Sayaç 00:00’da (Türkiye saatiyle “UTC+3”) sıfırlanır."));
+  // Toplam sınır tanımlıysa önemlidir, gösterilir; değilse her ilin kendi hakkı yeterli bilgidir.
+  card.append(sayac.toplamLimit
+    ? h("div", "gap", "Tüm İller Toplamı: ", h("b", "", String(sayac.tumIller)), " / " + sayac.toplamLimit)
+    : h("div", "note", "(her il için " + sayac.limit + "’" + dagitimEki(sayac.limit) + " kota hakkı vardır)"));
   return card;
 }
 
+// Türkçe dağıtım eki (5’er, 6’şar, 10’ar, 20’şer…): son okunan sayı sözcüğünün sesine göre
+function dagitimEki(n) {
+  const BIRLER = ["", "er", "şer", "er", "er", "er", "şar", "şer", "er", "ar"]; // bir … dokuz
+  const ONLAR = ["", "ar", "şer", "ar", "ar", "şer", "ar", "er", "er", "ar"];   // on … doksan
+  if (n % 10) return BIRLER[n % 10];
+  return n % 100 ? ONLAR[(n % 100) / 10] : n ? "er" : "ar"; // yüz/bin → er, sıfır → ar
+}
+
 function diyanetCard(dq) {
-  const card = h("div", "card", h("h3", "", "Diyanet'in Kendi Kota Sorgusu"));
+  const card = h("div", "card", h("h3", "", "Diyanet’in Kendi Kota Sorgusu"));
   if (!dq.ok) {
     card.append(
       h("div", "", "Alınamadı: " + (dq.hata || "bilinmeyen hata")),
@@ -275,17 +285,15 @@ function diyanetCard(dq) {
   }
   const v = dq.veri || {};
   if (Array.isArray(v.daily)) {
-    card.append(h("div", "", "Rol: ", h("b", "", v.role || "?"), " · günlük hak"));
+    card.append(h("div", "", "Rol: ", h("b", "", v.role || "?"), " · Günlük Hak"));
     for (const d of v.daily) {
       const ad = d.resultName || d.controllerName || "?";
       const hak = Number(d.benefit) || 0;
       for (const l of Array.isArray(d.lines) && d.lines.length ? d.lines : [null]) {
         const used = Number(l ? l.used : d.totalUsed) || 0;
         const left = l && asNum(l.remainingUse) !== null ? asNum(l.remainingUse) : Math.max(0, hak - used);
-        card.append(
-          h("div", "fit", ad + (l ? " " : ""), l ? h("span", "note blue", "(" + (l.parameter || "") + ")") : "",
-            ": ", h("b", "hl", "Kalan " + left + " / " + hak)),
-          h("div", "", "Diyanet’ten çekilen kota: ", h("b", "", String(used))));
+        card.append(h("div", "fit", ad + (l ? " " : ""), l ? h("b", "note blue", "(" + (l.parameter || "") + ")") : "",
+          ": ", h("b", "hl", "Kalan " + left + " / " + hak)));
       }
       if (Number(d.totalExceeded) > 0) card.append(h("div", "err", "Aşım sayısı: " + Number(d.totalExceeded)));
     }
