@@ -70,6 +70,9 @@
   .card.line h3 { margin: 0; font-size: 14px; }
   .card.line > div { font-size: 14px; }
   .gap { margin-top: 8px; }
+  /* Özet kartlarındaki ana satırlar tek ortak boyutu kullanır (--ls); fitLines() gerekirse hepsini birlikte küçültür */
+  #cards { --ls: 16px; }
+  #cards .card:not(.line) > div:not(.note) { font-size: var(--ls); }
   .fit { white-space: nowrap; }
   .fit .note { font-size: inherit; }
   .hl { color: #00bfff; font-weight: 700; }
@@ -303,14 +306,15 @@ function errorCard(le) {
     h("div", "", ...(le ? [le.mesaj, " ", h("span", "note", "(" + fmtTime(le.zaman) + ")")] : ["Yok"])));
 }
 
-// Tek satır kalması gereken metinler sığmazsa sığana kadar küçülür (en az 10px; yine sığmazsa alt satıra geçer).
+// Tek satır kalması gereken metinler sığmazsa kartlardaki bütün ana satırlar birlikte küçülür (en az 10px; yine sığmazsa alt satıra geçer).
 function fitLines() {
-  for (const el of document.querySelectorAll(".fit")) {
-    el.style.fontSize = el.style.whiteSpace = "";
-    let size = parseFloat(getComputedStyle(el).fontSize);
-    while (el.scrollWidth > el.clientWidth && size > 10) el.style.fontSize = (size -= 0.5) + "px";
-    if (el.scrollWidth > el.clientWidth) el.style.whiteSpace = "normal";
-  }
+  const fits = cards.querySelectorAll(".fit");
+  const over = () => Array.from(fits).some((el) => el.scrollWidth > el.clientWidth);
+  let size = 16;
+  cards.style.setProperty("--ls", size + "px");
+  for (const el of fits) el.style.whiteSpace = "";
+  while (size > 10 && over()) cards.style.setProperty("--ls", (size -= 0.5) + "px");
+  for (const el of fits) if (el.scrollWidth > el.clientWidth) el.style.whiteSpace = "normal";
 }
 window.addEventListener("resize", fitLines);
 
