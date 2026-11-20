@@ -14,14 +14,13 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-
-  const url = new URL(event.request.url);
-  if (url.origin !== self.location.origin) return;
+  const req = event.request;
+  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
 
   // no-store: tarayıcının HTTP önbelleğini de atlar, her seferinde sunucudan alınır.
+  // İstek nesnesi olduğu gibi iletilir: mod, yönlendirme ve başlıklar korunur.
   event.respondWith(
-    fetch(event.request.url, { cache: 'no-store' }).catch(() =>
+    fetch(req, { cache: 'no-store' }).catch(() =>
       new Response(
         'Çevrimdışısınız. Bu uygulama internet bağlantısı gerektirir.',
         { status: 503, statusText: 'Offline', headers: { 'Content-Type': 'text/plain; charset=utf-8' } }

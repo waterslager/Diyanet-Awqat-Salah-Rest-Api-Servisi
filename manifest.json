@@ -2,6 +2,7 @@
   "name": "Kıyâmü'l-Leyl",
   "short_name": "Kıyâmü'l-Leyl",
   "description": "Teheccüd, Seher ve Sabah Namazı vakitleri",
+  "id": "./index.html",
   "lang": "tr",
   "start_url": "./index.html",
   "scope": "./",
