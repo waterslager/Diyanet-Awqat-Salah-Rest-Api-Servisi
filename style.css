@@ -1,0 +1,533 @@
+/* Kıyâmü'l-Leyl — arayüz stilleri (index.html) */
+
+html { background: #1c2a56; }
+:root {
+    --bg-1: #1c2a56;
+    --bg-2: #2a4180;
+    --bg-3: #35509a;
+    --bg-4: #24356e;
+    --text: #ffffff;
+    --text-dark: #000000;
+    --muted: #a5b4fc;
+    --card-bg-black: #000000;
+    --card-border: rgba(59, 130, 246, 0.3);
+    --accent-green: #00ff88;
+    --accent-green-bar: #22c55e;
+    --muted-blue: #94a3c4;
+    --accent-blue: #00bfff;
+    --accent-blue-soft: #60a5fa;
+    --accent-orange: #ff7a00;
+    --accent-red: #ef4444;
+    --accent-red-strong: #e11d1d;
+    --accent-yellow: #fbd95e;
+    --prayer-card-bg: #16224a;
+    --accent-red-bright: #ff4444;
+    --accent-sky-blue: #64b5f6;
+    --muted-light: #a8b8d8;
+    --source-highlight: #fde047;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Times New Roman', Times, serif;
+    background:
+      radial-gradient(1200px 800px at 80% -10%, var(--bg-3) 0%, transparent 60%),
+      radial-gradient(800px 600px at -10% 110%, var(--bg-4) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 60%, var(--bg-1) 100%);
+    min-height: 100vh;
+    color: var(--text);
+    padding: 8px 20px 20px;
+    padding-top: max(8px, env(safe-area-inset-top, 0px));
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.status-bar-fill {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top, 0px);
+    background: var(--bg-1);
+    z-index: 1000;
+}
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+header {
+    text-align: center;
+}
+header h1 {
+    font-size: clamp(20px, 2.8vw, 28px);
+    margin-bottom: 3px;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+.tevhid {
+    font-size: clamp(12px, 2vw, 18px);
+    color: var(--accent-green);
+    font-family: "Scheherazade New", "Traditional Arabic", serif;
+    line-height: 1.4;
+    letter-spacing: 1.5px;
+    margin-bottom: 2px;
+    text-shadow: 0 0 10px rgba(0,255,136,0.6);
+}
+.card {
+    padding: 24px;
+    margin-bottom: 1mm;
+}
+.card-title {
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+}
+select {
+    width: 100%;
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.15);
+    font-size: 1rem;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.3s;
+    font-family: 'Times New Roman', Times, serif;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+.il-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 3px 14px;
+    background: var(--accent-yellow);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    margin-bottom: 1mm;
+    font-size: 11px;
+    gap: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.il-card .il-city {
+    color: var(--text-dark);
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.il-card .il-label {
+    color: var(--accent-red-strong);
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.il-card select {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: transparent;
+    opacity: 0;
+}
+.il-card.src-card { background: #ffffff; }
+.il-card.src-card .il-label { font-size: 9.5px; }
+.result-card {
+    background: var(--card-bg-black);
+    border-radius: 18px;
+    padding: 15px 18px;
+    margin-bottom: 1mm;
+    border: 1px solid rgba(255,255,255,0.08);
+    position: relative;
+}
+.result-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 3px;
+}
+.result-label {
+    font-size: 16px;
+    letter-spacing: 0.3px;
+    font-weight: 700;
+}
+.result-sub {
+    font-size: 9px;
+    line-height: 1.4;
+    color: var(--accent-blue-soft);
+    margin-top: 3px;
+}
+.sub-label {
+    font-size: 10px;
+    text-transform: capitalize;
+    color: #f97316;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.result-time {
+    font-size: 29px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 1.7px;
+}
+.teheccud-card .result-label,
+.arasi-card .result-label {
+    color: var(--accent-red);
+}
+.teheccud-card .result-time,
+.arasi-card .result-time {
+    color: var(--accent-blue);
+    text-shadow: 0 0 10px rgba(0,191,255,0.5);
+}
+.seher-card .result-label {
+    color: var(--accent-green);
+}
+.seher-card .result-time {
+    color: var(--accent-green);
+    text-shadow: 0 0 20px rgba(0,255,136,0.6), 0 0 40px rgba(0,255,136,0.3);
+}
+.skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.14), rgba(255,255,255,0.04));
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 6px;
+    color: transparent !important;
+    text-shadow: none !important;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+.data-badge {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  margin: 0 0 12px; padding: 2px 12px; border-radius: 999px;
+  font-size: 0.66rem; color: var(--muted, #94a3b8);
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+}
+.data-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #22c55e; flex: none; }
+.data-badge.cache::before { background: #f59e0b; }
+.status {
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 16px;
+    font-size: 0.85rem;
+    color: var(--muted);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.status.error {
+    background: rgba(239,68,68,0.15);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: #fca5a5;
+}
+.hidden { display: none !important; }
+.prayer-times-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px 4px;
+    margin-top: 8px;
+}
+.location-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    padding: 3px 14px;
+    background: var(--accent-orange);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    margin-bottom: 1mm;
+    font-size: 11px;
+    gap: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.location-display .loc-date { font-size: 11px; color: var(--text-dark); font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
+.hijri-date { font-size: 11px; color: var(--text-dark); font-weight: 700; flex-shrink: 0; }
+.next-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 14px;
+    background: var(--accent-green-bar);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    font-size: 11px;
+    gap: 10px;
+    margin-bottom: 1mm;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.next-bar .next-info { color: var(--text-dark); font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
+.next-bar .next-info #nextTime, .next-bar .next-info #nextRaw { font-size: 16px; }
+.next-bar .next-info #nextRaw { margin-left: 2px; color: #991b1b; }
+.next-bar .next-remain { color: var(--text-dark); font-weight: 700; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.next-bar .next-remain #nextRemain { font-size: 16px; }
+.source-note {
+    text-align: center;
+    font-size: 0.63rem;
+    color: var(--muted-blue);
+    margin-top: 0;
+    padding: 4px 8px 8px;
+}
+
+.src-hl { color: var(--source-highlight); }
+.src-dom { color: var(--accent-blue-soft); }
+.src-loc { margin-top: 3px; font-size: 0.62rem; opacity: .85; }
+.il-card.src-card .il-city.small { font-size: 9.5px; }
+.card-icon img { display: block; }
+
+.kota-link {
+    display: table;
+    margin: 8px auto 0;
+    padding: 6px 14px;
+    border: 1px solid var(--card-border);
+    border-radius: 999px;
+    color: var(--accent-blue);
+    font-size: 0.68rem;
+    text-decoration: none;
+}
+
+.sabah-camide-card {
+    background: var(--card-bg-black);
+    border-radius: 20px;
+    padding: 18px;
+    margin-bottom: 1mm;
+    border: 1px solid rgba(255,255,255,0.1);
+    position: relative;
+    --num-size: 29px;
+}
+.sabah-camide-card .farz-label {
+    font-size: 10px;
+    text-transform: capitalize;
+    color: #f97316;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.sabah-camide-card .sabah-title {
+    font-size: 16px;
+    color: var(--accent-red);
+    font-weight: 700;
+    margin-bottom: 9px;
+}
+.sabah-camide-card.camide-imsak .time-row { visibility: hidden; }
+.sabah-camide-card .time-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 15px;
+    border: 2px solid #ff7a00;
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin: 0;
+}
+.sabah-camide-card .time-value-group {
+    display: grid;
+    grid-template-rows: auto auto;
+    gap: 1px;
+}
+.sabah-camide-card .time-title {
+    font-size: 8.5px;
+    line-height: 1.2;
+    color: var(--source-highlight);
+    font-weight: 600;
+    white-space: nowrap;
+}
+.sabah-camide-card .time-value {
+    font-size: var(--num-size);
+    color: #ff7a00;
+    text-shadow: 0 0 10px rgba(255,122,0,0.5);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+.sabah-camide-card .dk-title-group {
+    display: grid;
+    grid-template-rows: auto auto;
+    gap: 1px;
+}
+.sabah-camide-card .dk-title {
+    font-size: 8.5px;
+    line-height: 1.2;
+    color: var(--source-highlight);
+    font-weight: 600;
+    white-space: nowrap;
+}
+.sabah-camide-card .dk-group {
+    display: flex;
+    align-items: center;
+    line-height: 1.2;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.sabah-camide-card .dk-label {
+    font-size: 8px;
+    color: var(--accent-blue-soft);
+    white-space: nowrap;
+}
+.sabah-camide-card .dk-input {
+    width: 23.5px;
+    flex-shrink: 0;
+    height: 16px;
+    padding: 0 2px;
+    border-radius: 4px;
+    border: none;
+    background: var(--accent-orange);
+    color: var(--text-dark);
+    font-size: 11.5px;
+    font-weight: 900;
+    text-align: center;
+    font-family: 'Times New Roman', Times, serif;
+    outline: none;
+    line-height: 1;
+}
+.sabah-camide-card .dk-input::-webkit-outer-spin-button,
+.sabah-camide-card .dk-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.sabah-camide-card .dk-input[type=number] {
+    -moz-appearance: textfield;
+}
+.camide-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 6.2px;
+}
+.imsak-gunes-mini {
+    text-align: right;
+    line-height: 1.2;
+    flex-shrink: 0;
+}
+.imsak-gunes-mini .mini-block {
+    margin-bottom: 4px;
+}
+.imsak-gunes-mini .mini-block:last-child {
+    margin-bottom: 0;
+}
+.imsak-gunes-mini .mini-label,
+.imsak-gunes-mini .mini-time {
+    font-size: 9px;
+    font-weight: 600;
+}
+.imsak-gunes-mini .imsak-color { color: var(--accent-green-bar); }
+.imsak-gunes-mini .gunes-color { color: var(--accent-red); }
+.camide-label {
+    font-size: 10px;
+    letter-spacing: 0.3px;
+    color: var(--accent-green);
+    font-weight: 700;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    text-shadow: 0 0 12px rgba(0,255,136,0.5);
+}
+.camide-content {
+    min-width: 0;
+}
+.camide-time {
+    font-size: var(--num-size);
+    color: var(--accent-green);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 1px;
+    line-height: 1;
+    text-shadow: 0 0 20px rgba(0,255,136,0.6), 0 0 40px rgba(0,255,136,0.3);
+}
+.camide-opt {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    font: inherit;
+    font-size: 10.5px;
+    line-height: 1.4;
+    color: var(--accent-blue-soft);
+    text-align: left;
+    -webkit-tap-highlight-color: transparent;
+}
+.camide-opt::after { content: ""; position: absolute; inset: -3px -6px; }
+.camide-chk {
+    position: relative;
+    flex-shrink: 0;
+    width: 13px;
+    height: 13px;
+    border-radius: 3px;
+    background: #ef4444;
+}
+.camide-opt[aria-pressed="true"] .camide-chk { background: #22c55e; }
+.camide-opt[aria-pressed="true"] .camide-chk::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 1.5px;
+    width: 3px;
+    height: 6px;
+    border: solid #000;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.prayer-card {
+    background: var(--prayer-card-bg);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 20px;
+    padding-top: 14px;
+    padding-bottom: 6px;
+    position: relative;
+}
+.prayer-card .card-title {
+    gap: 5px;
+    color: var(--accent-red-bright);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    margin-bottom: 3px;
+}
+.prayer-card .prayer-date {
+    font-size: 11px;
+    color: var(--accent-sky-blue);
+}
+.prayer-card .prayer-hijri-date {
+    font-size: 10px;
+    color: var(--muted-light);
+    margin-top: 4px;
+    margin-bottom: 6px;
+}
+.prayer-item {
+    border-radius: 10px;
+    padding: 2px 4px;
+    text-align: center;
+}
+.prayer-item .p-name { font-size: 8px; color: var(--accent-sky-blue); letter-spacing: 1px; margin-bottom: 2px; text-transform: uppercase; font-weight: 900; }
+.prayer-item.is-current { background: rgba(100, 181, 246, 0.10); box-shadow: inset 0 0 0 1px rgba(100, 181, 246, 0.55); }
+.prayer-item .p-time { font-size: 12px; color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.dk-box { display: flex; flex-direction: column; gap: 1mm; margin-bottom: 1mm; }
+.dk-box [hidden] { display: none; }
+.dk-card { border-radius: 9px; padding: 2px 8px 3px; background: var(--accent-green-bar); color: var(--text-dark); }
+.dk-card.dk-k { position: relative; background: #f97316; }
+.dk-card.red { background: var(--accent-red); }
+#dkDuha.red { background: var(--accent-yellow); }
+.dk-top { display: flex; align-items: center; gap: 6px; }
+.dk-ttl { font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+.dk-no { position: absolute; left: max(69%, 206px); top: 50%; transform: translate(-50%, -50%); font-size: 1rem; line-height: 1; }
+.dk-rng { margin-left: auto; font-size: 1.1rem; font-weight: 700; line-height: 1.1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.dk-cd { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; background: #fff; color: var(--text-dark); font-weight: 700; border-radius: 5px; padding: 0 6px; margin-top: 1px; line-height: 1.15; }
+.dk-cd span { font-size: 0.62rem; }
+.dk-cd b { font-size: 0.9rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.card-icon {
+    position: absolute; top: 13px; right: 13px; font-size: 22px;
+}
+.card-icon-emoji { font-size: 20px; }
+
+@media (min-width: 700px) {
+    .container { max-width: 680px; }
+}
