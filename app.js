@@ -7,6 +7,14 @@ if (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "Mac
   document.querySelector('meta[name="viewport"]').content += ", maximum-scale=1";
 }
 
+// style.css tek seferlik alınamadıysa (bağlantı kopması vb.) sayfa stilsiz kalmasın diye bir kez daha istenir.
+if (!getComputedStyle(document.documentElement).getPropertyValue("--bg-1").trim()) {
+  const retry = document.createElement("link");
+  retry.rel = "stylesheet";
+  retry.href = "style.css?r=" + Date.now();
+  document.head.appendChild(retry);
+}
+
 const STORAGE_KEY = "kiyamul-leyl.location.v1";
 const OFFSET_STORAGE_KEY = "kiyamul-leyl.sabahOffset.v1";
 const CAMIDE_MODE_KEY = "kiyamul-leyl.camideMode.v1";
