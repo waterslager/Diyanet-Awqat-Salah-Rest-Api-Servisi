@@ -40,6 +40,7 @@ let retryPending = false;
 let retryCount = 0;
 let cachedNextEvent = null;
 let lastScanAt = 0;
+let sunriseAt = 0; // güneş doğunca "dönem" değişir; o an beklemeden yeniden taranır
 
 const setText = (el, t) => { if (el.textContent !== t) el.textContent = t; }; // aynı metni her saniye yeniden yazmaz
 const TIME_ELS = ["teheccudTime", "arasiTime", "seherTime", "sabahTime", "camideTime", "imsakMiniTime", "gunesMiniTime"]
@@ -790,10 +791,14 @@ function tickCountdown() {
   const now = Date.now();
   const needsScan = !cachedNextEvent
     || now >= cachedNextEvent.time.getTime()
+    || now >= sunriseAt
     || (now - lastScanAt) >= 60000;
 
   if (needsScan) {
     lastScanAt = now;
+    const td = getTodayData();
+    const sunrise = td && parseTime(td.gunes, td.date);
+    sunriseAt = sunrise && sunrise.getTime() > now ? sunrise.getTime() : Infinity;
     const period = findActivePeriod(state.times);
     if (!period) {
       scheduleReload();
