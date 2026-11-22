@@ -174,6 +174,7 @@ function fitLines() {
 window.addEventListener("resize", fitLines);
 
 function showReport(d) {
+  document.body.classList.remove("rawopen"); // yeni kartlardaki "Ham yanıt" kapalı başlar
   cards.replaceChildren(workerCard(d), diyanetCard(d.diyanet), ...(d.sonHata ? [errorCard(d.sonHata)] : []));
   keyForm.hidden = true;
   report.hidden = false;
@@ -181,6 +182,7 @@ function showReport(d) {
 }
 
 function hideReport() {
+  document.body.classList.remove("rawopen");
   report.hidden = true;
   cards.replaceChildren();
 }

@@ -41,6 +41,7 @@ let retryCount = 0;
 let cachedNextEvent = null;
 let lastScanAt = 0;
 
+const setText = (el, t) => { if (el.textContent !== t) el.textContent = t; }; // aynı metni her saniye yeniden yazmaz
 const TIME_ELS = ["teheccudTime", "arasiTime", "seherTime", "sabahTime", "camideTime", "imsakMiniTime", "gunesMiniTime"]
   .map((id) => document.getElementById(id));
 function setLoading(on) {
@@ -760,10 +761,10 @@ function refreshDuhaKerahat() {
     const on = !!day && now >= day[c.s] && now < day[c.e];
     el.classList.toggle("red", !!day && !!c.k === on);
     if (c.k) el.querySelector(".dk-no").hidden = !on;
-    rng.textContent = day ? c.show.map((k) => fmt(new Date(day[k]))).join(" – ") : "--:--";
+    setText(rng, day ? c.show.map((k) => fmt(new Date(day[k]))).join(" – ") : "--:--");
     if (cd) {
       cd.hidden = !on;
-      if (on) cd.querySelector("b").textContent = formatRemain(day[c.e] - now);
+      if (on) setText(cd.querySelector("b"), formatRemain(day[c.e] - now));
     }
   }
 }
@@ -775,11 +776,11 @@ const timeEl = document.getElementById("nextTime");
 const rawEl = document.getElementById("nextRaw");
 const remainEl = document.getElementById("nextRemain");
 function updateNextBar(next) {
-  nameEl.textContent = (next.key === "sabah" ? "Sabah" : next.name) + " Vakti";
-  timeEl.textContent = fmt(next.time);
+  setText(nameEl, (next.key === "sabah" ? "Sabah" : next.name) + " Vakti");
+  setText(timeEl, fmt(next.time));
   const temkin = source === "aladhan" ? 0 : TEMKIN_MIN[next.key];
-  rawEl.textContent = temkin ? "/" + fmt(new Date(next.time.getTime() - temkin * 60000)) : "";
-  remainEl.textContent = formatRemain(next.time.getTime() - Date.now());
+  setText(rawEl, temkin ? "/" + fmt(new Date(next.time.getTime() - temkin * 60000)) : "");
+  setText(remainEl, formatRemain(next.time.getTime() - Date.now()));
   refreshVakitList();
   refreshDuhaKerahat();
 }
@@ -840,7 +841,6 @@ function setCamideMode(mode, save) {
 async function init() {
   try { setCamideMode(localStorage.getItem(CAMIDE_MODE_KEY)); } catch (e) { console.warn("[storage] okunamadı:", e); }
   document.querySelectorAll(".camide-opt").forEach((b) => b.addEventListener("click", () => setCamideMode(b.dataset.mode, true)));
-  stateSelect.addEventListener("change", updateIlCityDisplay);
   stateSelect.addEventListener("change", onIlChange);
 
   try {
@@ -984,6 +984,7 @@ async function activateSource(newSrc, initial) {
 let ilChangeToken = 0;
 function onIlChange(e) {
   const sel = e.target;
+  updateIlCityDisplay();
   const ilId = sel.value;
   if (!ilId) return;
   selectIl(ilId, sel.options[sel.selectedIndex].dataset.ad);

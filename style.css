@@ -130,6 +130,7 @@ select {
     color: transparent;
     opacity: 0;
 }
+.il-card:has(select:focus-visible) { outline: 2px solid var(--accent-blue); outline-offset: 2px; }
 .il-card.src-card { background: #ffffff; }
 .il-card.src-card .il-label { font-size: 9.5px; }
 .result-card {
@@ -381,6 +382,7 @@ select {
     outline: none;
     line-height: 1;
 }
+.sabah-camide-card .dk-input:focus-visible { box-shadow: 0 0 0 2px var(--accent-blue); }
 .sabah-camide-card .dk-input::-webkit-outer-spin-button,
 .sabah-camide-card .dk-input::-webkit-inner-spin-button {
     -webkit-appearance: none;
