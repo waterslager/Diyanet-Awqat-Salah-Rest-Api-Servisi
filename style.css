@@ -284,6 +284,7 @@ select {
     border-radius: 999px;
     color: var(--accent-blue);
     font-size: 0.68rem;
+    font-weight: 700;
     text-decoration: none;
 }
 

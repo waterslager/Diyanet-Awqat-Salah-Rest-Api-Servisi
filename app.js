@@ -737,10 +737,10 @@ function refreshVakitList(force) {
   highlightCurrentVakit(info);
 }
 
-/* Duha ve kerahat kartları (s/e: vaktin başı/sonu, u: bu andan sonra yarın gösterilir (varsayılan akşam),
+/* Duha ve kerahat kartları (s/e: vaktin başı/sonu; hepsi akşam ezanında yarının vaktine geçer,
    show: görünen saat(ler), k: kerahat → vakit sürerken kırmızı ve ⛔; Duha'da tersi: vakit dışında sarı, vakit içinde yeşil) */
 const DK_LIST = [
-  { id: "dkDuha",   s: "duha",    e: "duhaEnd",  u: "duhaEnd", show: ["duha", "duhaEnd"] },
+  { id: "dkDuha",   s: "duha",    e: "duhaEnd", show: ["duha", "duhaEnd"] },
   { id: "dkSabah",  s: "gunes",   e: "sabahEnd", show: ["sabahEnd"], k: 1 },
   { id: "dkOgle",   s: "ogleK",   e: "ogle",     show: ["ogleK"],    k: 1 },
   { id: "dkIkindi", s: "ikindiK", e: "aksam",    show: ["ikindiK"],  k: 1 }
@@ -766,7 +766,7 @@ function refreshDuhaKerahat() {
   const now = Date.now();
   for (const c of DK_LIST) {
     const el = document.getElementById(c.id), rng = el.querySelector(".dk-rng"), cd = el.querySelector(".dk-cd");
-    const day = T0 && (now >= T0[c.u || "aksam"] ? T1 : T0);
+    const day = T0 && (now >= T0.aksam ? T1 : T0);
     const on = !!day && now >= day[c.s] && now < day[c.e];
     el.classList.toggle("red", !!day && !!c.k === on);
     if (c.k) el.querySelector(".dk-no").hidden = !on;
