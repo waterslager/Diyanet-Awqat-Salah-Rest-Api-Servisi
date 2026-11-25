@@ -272,15 +272,17 @@ select {
 
 .src-hl { color: var(--source-highlight); }
 .src-dom { color: var(--accent-blue-soft); }
-.src-loc { margin-top: 3px; font-size: 0.62rem; opacity: .85; }
+.src-line { white-space: nowrap; overflow: hidden; }
+.source-note.wrap .src-line { white-space: normal; }
+.src-loc { margin-top: 3px; opacity: .85; }
 .il-card.src-card .il-city.small { font-size: 9.5px; }
 .card-icon img { display: block; }
 
 .kota-link {
     display: table;
     margin: 8px auto 0;
-    padding: 6px 14px;
-    border: 1px solid var(--card-border);
+    padding: 3px 14px;
+    border: 1px solid #000;
     border-radius: 999px;
     color: var(--accent-blue);
     font-size: 0.68rem;

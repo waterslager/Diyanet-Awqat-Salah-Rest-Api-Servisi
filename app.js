@@ -104,7 +104,7 @@ const TURKEY_ID = "2";
 let source = "diyanet";
 const IL_LIST_TIMEOUT_MS = 6000;
 const SOURCE_INFO = {
-  diyanet:     { note: "Diyanet İşleri Başkanlığı", domain: "awqatsalah.diyanet.gov.tr", freq: "Açılışta Worker'daki son kayıt gösterilir; sayfa yenilenince Diyanet'ten yenilenir." },
+  diyanet:     { note: "Diyanet İşleri Başkanlığı", domain: "awqatsalah.diyanet.gov.tr", freq: "Açılışta Worker'daki son kayıt gösterilir; sayfa yenilenince Diyanet'ten canlı güncellenir." },
   diyanetlive: { note: "Diyanet İşleri Başkanlığı", domain: "awqatsalah.diyanet.gov.tr", freq: "Her açılışta ve yenilemede Diyanet'ten anlık alınır." },
   imsakiyem: { note: "Diyanet İşleri Başkanlığı", domain: "ezanvakti.imsakiyem.com", freq: "Her açılışta otomatik güncellenir." },
   emushaf:   { note: "Diyanet İşleri Başkanlığı", domain: "ezanvakti.emushaf.net", freq: "Her açılışta otomatik güncellenir." },
@@ -557,8 +557,7 @@ async function loadAndRender(forceLive) {
     const msg = String((e && e.message) || e);
     const isTransient = /Ağ hatası|zaman aşımı|Failed to fetch|API hatası: (?:5\d\d|429|408)|geçersiz yanıt/i.test(msg);
 
-    // Ekrandaki vakitler aynı il ve kaynağa aitse geçerlidir: geri sayım durmadan devam eder
-    // (önceden yalnız "Kayıtlı veri"de devam ediyordu; internet gidince "Kalan Süre" donuyordu).
+    // Ekrandaki vakitler aynı il ve kaynağa aitse geçerlidir: bağlantı kopsa da geri sayım durmadan devam eder.
     const keepTimes = !!state.times && state.timesIlceId === myLoc.ilceId && state.timesSource === mySource;
     if (!keepTimes) {
       resetTimes();
@@ -890,13 +889,31 @@ function updateLocationLine() {
           ? il + " (Merkez · " + id + ")"
           : il + " (" + toTitle(name) + " · " + id + ") – merkez ilçe bulunamadı";
       }
-    } else if (source === "imsakiyem" && loc.ilceAd) {
+    } else if ((source === "imsakiyem" || source === "emushaf") && loc.ilceAd) {
       text = il + (sameIl(loc.ilceAd, loc.ilAd) ? " (Merkez)" : " (" + toTitle(loc.ilceAd) + ")");
+    } else if (source === "aladhan") {
+      text = il;
     }
   }
   el.textContent = text ? "Konum: " + text : "";
   el.classList.toggle("hidden", !text);
+  fitSourceNote();
 }
+
+// Kaynak notu satırları, tek satıra sığacak en büyük ortak yazı boyutuna küçültülür.
+function fitSourceNote() {
+  const box = document.getElementById("sourceNote");
+  if (!box) return;
+  box.classList.remove("wrap");
+  box.style.fontSize = "";
+  const lines = box.querySelectorAll(".src-line:not(.hidden)");
+  let size = parseFloat(getComputedStyle(box).fontSize);
+  const over = () => Array.prototype.some.call(lines, (l) => l.scrollWidth > l.clientWidth + 0.5);
+  while (over() && size > 7) { size -= 0.25; box.style.fontSize = size + "px"; }
+  if (over()) box.classList.add("wrap");
+}
+window.addEventListener("resize", fitSourceNote);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitSourceNote);
 
 function updateSourceUI() {
   const info = SOURCE_INFO[source];
@@ -908,6 +925,7 @@ function updateSourceUI() {
   document.getElementById("srcFreq").textContent = info.freq;
   // Kota bağlantısı yalnızca Diyanet kaynaklarında görünür (kota.html aynı klasörde, uygulama içinde açılır)
   document.getElementById("kotaLink").classList.toggle("hidden", !(source === "diyanet" || source === "diyanetlive"));
+  fitSourceNote();
 }
 
 let sourceToken = 0;
