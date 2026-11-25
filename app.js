@@ -895,7 +895,13 @@ function updateLocationLine() {
       text = il;
     }
   }
-  el.textContent = text ? "Konum: " + text : "";
+  el.textContent = "";
+  if (text) {
+    const val = document.createElement("span");
+    val.className = "src-loc-val";
+    val.textContent = text;
+    el.append("Konum: ", val);
+  }
   el.classList.toggle("hidden", !text);
   fitSourceNote();
 }

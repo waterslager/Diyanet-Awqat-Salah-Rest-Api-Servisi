@@ -275,6 +275,7 @@ select {
 .src-line { white-space: nowrap; overflow: hidden; }
 .source-note.wrap .src-line { white-space: normal; }
 .src-loc { margin-top: 3px; opacity: .85; }
+.src-loc-val { color: #22c55e; font-weight: 700; }
 .il-card.src-card .il-city.small { font-size: 9.5px; }
 .card-icon img { display: block; }
 
