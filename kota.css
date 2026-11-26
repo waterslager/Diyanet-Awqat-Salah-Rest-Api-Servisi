@@ -52,7 +52,7 @@ button:disabled { opacity: .55; cursor: default; }
 #msg.err { background: rgba(248,113,113,.12); border: 1px solid var(--err); color: #fecaca; }
 #msg.info { background: rgba(251,191,36,.10); border: 1px solid var(--accent); color: #fde68a; }
 #report h2 { font-size: 18px; margin: 16px 0 6px; }
-#cards .card { margin: 0 0 8px; scroll-margin-top: 0; }
+#cards .card { margin: 0 0 8px; }
 #cards .card:last-child { margin-bottom: 0; }
 h3 { font-size: 15px; margin: 0 0 8px; color: var(--accent); }
 .card.line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
