@@ -15,6 +15,13 @@ if (!getComputedStyle(document.documentElement).getPropertyValue("--bg-1").trim(
   document.head.appendChild(retry);
 }
 
+// Depolama erişimi: gizli mod / dolu kota gibi durumlarda hata fırlatmaz.
+const webStore = (name) => ({
+  get(k) { try { return window[name].getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { window[name].setItem(k, v); } catch (e) { /* yok say */ } }
+});
+const local = webStore("localStorage"), session = webStore("sessionStorage");
+
 const STORAGE_KEY = "kiyamul-leyl.location.v1";
 const OFFSET_STORAGE_KEY = "kiyamul-leyl.sabahOffset.v1";
 const CAMIDE_MODE_KEY = "kiyamul-leyl.camideMode.v1";
@@ -84,16 +91,10 @@ function setStatus(msg, isError) {
 function pad(n) { return n < 10 ? "0" + n : "" + n; }
 
 function loadSaved() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (e) { console.warn("[storage] okunamadı:", e); }
-  return null;
+  try { return JSON.parse(local.get(STORAGE_KEY)); } catch (e) { return null; }
 }
 
-function saveLocation(loc) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(loc)); } catch (e) { console.warn("[storage] yazılamadı:", e); }
-}
+function saveLocation(loc) { local.set(STORAGE_KEY, JSON.stringify(loc)); }
 
 const API_BASE = "https://ezanvakti.imsakiyem.com/api";
 const EMUSHAF_BASE = "https://ezanvakti.emushaf.net";
@@ -111,7 +112,7 @@ const SOURCE_INFO = {
   aladhan:   { note: "AlAdhan · Diyanet yöntemi", domain: "api.aladhan.com", freq: "Her açılışta otomatik güncellenir." }
 };
 
-// NOT: Bu liste worker.js içindeki IL_TR ile aynı olmalı; birini değiştirirseniz diğerini de güncelleyin.
+// NOT: Bu liste worker.js ve kota.js içindeki IL_TR ile aynı olmalı; birini değiştirirseniz diğerlerini de güncelleyin.
 const IL_TR = ["ADANA","ADIYAMAN","AFYONKARAHİSAR","AĞRI","AKSARAY","AMASYA","ANKARA","ANTALYA","ARDAHAN","ARTVİN","AYDIN","BALIKESİR","BARTIN","BATMAN","BAYBURT","BİLECİK","BİNGÖL","BİTLİS","BOLU","BURDUR","BURSA","ÇANAKKALE","ÇANKIRI","ÇORUM","DENİZLİ","DİYARBAKIR","DÜZCE","EDİRNE","ELAZIĞ","ERZİNCAN","ERZURUM","ESKİŞEHİR","GAZİANTEP","GİRESUN","GÜMÜŞHANE","HAKKARİ","HATAY","IĞDIR","ISPARTA","İSTANBUL","İZMİR","KAHRAMANMARAŞ","KARABÜK","KARAMAN","KARS","KASTAMONU","KAYSERİ","KİLİS","KIRIKKALE","KIRKLARELİ","KIRŞEHİR","KOCAELİ","KONYA","KÜTAHYA","MALATYA","MANİSA","MARDİN","MERSİN","MUĞLA","MUŞ","NEVŞEHİR","NİĞDE","ORDU","OSMANİYE","RİZE","SAKARYA","SAMSUN","ŞANLIURFA","SİİRT","SİNOP","ŞIRNAK","SİVAS","TEKİRDAĞ","TOKAT","TRABZON","TUNCELİ","UŞAK","VAN","YALOVA","YOZGAT","ZONGULDAK"];
 function trToEn(s) {
   return String(s || "").replace(/[İIıi]/g, "I").replace(/[Şş]/g, "S").replace(/[Ğğ]/g, "G")
@@ -418,7 +419,7 @@ function applyOffsetLimit(period) {
     const v = parseInt(dkInput.value, 10);
     if (!isNaN(v) && v > offsetDayMax) {
       dkInput.value = String(offsetDayMax);
-      try { localStorage.setItem(OFFSET_STORAGE_KEY, dkInput.value); } catch (e) { console.warn("[storage] yazılamadı:", e); }
+      local.set(OFFSET_STORAGE_KEY, dkInput.value);
     }
   }
 }
@@ -832,7 +833,7 @@ function tickCountdown() {
 
 function onOffsetChange() {
   if (clampOffsetInput(dkInput)) showOffsetLimitNote();
-  try { localStorage.setItem(OFFSET_STORAGE_KEY, dkInput.value); } catch (e) { console.warn("[storage] yazılamadı:", e); }
+  local.set(OFFSET_STORAGE_KEY, dkInput.value);
   if (state.times) {
     const period = findActivePeriod(state.times);
     if (period) render(period);
@@ -844,26 +845,22 @@ function setCamideMode(mode, save) {
   document.querySelector(".sabah-camide-card").classList.toggle("camide-imsak", camideMode === "imsak");
   document.querySelectorAll(".camide-opt").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === camideMode)));
   if (save) {
-    try { localStorage.setItem(CAMIDE_MODE_KEY, camideMode); } catch (e) { console.warn("[storage] yazılamadı:", e); }
+    local.set(CAMIDE_MODE_KEY, camideMode);
     const period = state.times && findActivePeriod(state.times);
     if (period) render(period);
   }
 }
 
 async function init() {
-  try { setCamideMode(localStorage.getItem(CAMIDE_MODE_KEY)); } catch (e) { console.warn("[storage] okunamadı:", e); }
+  setCamideMode(local.get(CAMIDE_MODE_KEY));
   document.querySelectorAll(".camide-opt").forEach((b) => b.addEventListener("click", () => setCamideMode(b.dataset.mode, true)));
   stateSelect.addEventListener("change", onIlChange);
 
-  try {
-    const savedOffset = localStorage.getItem(OFFSET_STORAGE_KEY);
-    if (savedOffset !== null) {
-      dkInput.value = savedOffset;
-      if (clampOffsetInput(dkInput, true)) {
-        try { localStorage.setItem(OFFSET_STORAGE_KEY, dkInput.value); } catch (e) { console.warn("[storage] yazılamadı:", e); }
-      }
-    }
-  } catch (e) { console.warn("[storage] okunamadı:", e); }
+  const savedOffset = local.get(OFFSET_STORAGE_KEY);
+  if (savedOffset !== null) {
+    dkInput.value = savedOffset;
+    if (clampOffsetInput(dkInput, true)) local.set(OFFSET_STORAGE_KEY, dkInput.value);
+  }
 
   dkInput.addEventListener("input", onOffsetChange);
   dkInput.addEventListener("change", () => {
@@ -871,7 +868,7 @@ async function init() {
   });
 
   sourceSelect.addEventListener("change", () => activateSource(sourceSelect.value));
-  const s0 = readSession(SESSION_SRC_KEY);
+  const s0 = session.get(SESSION_SRC_KEY);
   await activateSource(SOURCE_INFO[s0] ? s0 : "diyanet", true);
 }
 
@@ -942,17 +939,16 @@ let lastIlAd = null;
 function rememberIl(ilAd) {
   if (!ilAd) return;
   lastIlAd = ilAd;
-  try { sessionStorage.setItem(SESSION_IL_KEY, ilAd); } catch (e) {}
-  try { localStorage.setItem(IL_PREF_KEY, ilAd); } catch (e) {}
+  session.set(SESSION_IL_KEY, ilAd);
+  local.set(IL_PREF_KEY, ilAd);
 }
-function readSession(key) { try { return sessionStorage.getItem(key); } catch (e) { return null; } }
 async function activateSource(newSrc, initial) {
   const myToken = ++sourceToken;
-  if (initial && !lastIlAd) lastIlAd = readSession(SESSION_IL_KEY);
-  if (initial && !lastIlAd) { try { lastIlAd = localStorage.getItem(IL_PREF_KEY); } catch (e) {} }
+  if (initial && !lastIlAd) lastIlAd = session.get(SESSION_IL_KEY);
+  if (initial && !lastIlAd) lastIlAd = local.get(IL_PREF_KEY);
   if (initial && !lastIlAd) { const sv = loadSaved(); if (sv && sv.ilAd) lastIlAd = sv.ilAd; }
   const prevIlAd = (state.location && state.location.ilAd) || lastIlAd;
-  try { sessionStorage.setItem(SESSION_SRC_KEY, newSrc); } catch (e) {}
+  session.set(SESSION_SRC_KEY, newSrc);
   source = newSrc;
   updateSourceUI();
 
